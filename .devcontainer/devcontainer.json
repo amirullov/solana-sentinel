@@ -1,0 +1,26 @@
+{
+  "name": "Solana Sentinel",
+  "dockerComposeFile": ["../infra/docker/compose.yml", "docker-compose.devcontainer.yml"],
+  "service": "workspace",
+  "workspaceFolder": "/workspaces/solana-sentinel",
+  "shutdownAction": "stopCompose",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+  "containerEnv": {
+    "DATABASE_URL": "postgres://sentinel:sentinel@postgres:5432/sentinel"
+  },
+  "postCreateCommand": "npm install --global pnpm@11.25.0 && pnpm install --frozen-lockfile || pnpm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

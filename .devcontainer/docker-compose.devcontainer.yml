@@ -1,0 +1,9 @@
+services:
+  workspace:
+    image: mcr.microsoft.com/devcontainers/rust:1-1-bookworm
+    volumes:
+      - ..:/workspaces/solana-sentinel:cached
+    command: sleep infinity
+    depends_on:
+      postgres:
+        condition: service_healthy

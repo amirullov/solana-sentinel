@@ -1,0 +1,102 @@
+{
+  "folders": [{ "name": "Solana Sentinel", "path": "." }],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[rust]": { "editor.defaultFormatter": "rust-lang.rust-analyzer" },
+    "files.exclude": { "**/.git": true, "**/node_modules": true, "**/target": true },
+    "search.exclude": { "**/.next": true, "**/dist": true, "**/coverage": true },
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "eslint.useFlatConfig": true,
+    "rust-analyzer.check.command": "clippy"
+  },
+  "extensions": {
+    "recommendations": [
+      "rust-lang.rust-analyzer",
+      "tamasfe.even-better-toml",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "ms-azuretools.vscode-docker",
+      "redhat.vscode-yaml",
+      "eamodio.gitlens"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Sentinel: install",
+        "type": "shell",
+        "command": "pnpm install",
+        "problemMatcher": []
+      },
+      {
+        "label": "Sentinel: verify all",
+        "type": "shell",
+        "command": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && cargo fmt --all -- --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
+        "group": { "kind": "test", "isDefault": true },
+        "problemMatcher": ["$tsc", "$rustc"]
+      },
+      {
+        "label": "Sentinel: PostgreSQL up",
+        "type": "shell",
+        "command": "pnpm db:up",
+        "problemMatcher": []
+      },
+      {
+        "label": "Sentinel: migrate",
+        "type": "shell",
+        "command": "pnpm db:migrate",
+        "dependsOn": "Sentinel: PostgreSQL up",
+        "problemMatcher": []
+      },
+      {
+        "label": "Sentinel: build packages",
+        "type": "shell",
+        "command": "pnpm --filter \"./packages/*\" build",
+        "problemMatcher": "$tsc"
+      },
+      {
+        "label": "Sentinel: API",
+        "type": "shell",
+        "command": "pnpm --filter @sentinel/api build && pnpm --filter @sentinel/api start",
+        "isBackground": true,
+        "problemMatcher": []
+      },
+      {
+        "label": "Sentinel: Web",
+        "type": "shell",
+        "command": "pnpm --filter @sentinel/web dev",
+        "isBackground": true,
+        "problemMatcher": []
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Indexer: replay fixture",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/apps/indexer/dist/main.js",
+        "args": ["--replay", "${workspaceFolder}/tests/fixtures/account-updates.json"],
+        "preLaunchTask": "Sentinel: build packages",
+        "console": "integratedTerminal",
+        "sourceMaps": true
+      },
+      {
+        "name": "API",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/apps/api/dist/main.js",
+        "envFile": "${workspaceFolder}/.env",
+        "console": "integratedTerminal",
+        "sourceMaps": true
+      }
+    ],
+    "compounds": [
+      { "name": "Sentinel: API + replay", "configurations": ["API", "Indexer: replay fixture"] }
+    ]
+  }
+}

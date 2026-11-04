@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Indexer replay",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/indexer/dist/main.js",
+      "args": ["--replay", "${workspaceFolder}/tests/fixtures/account-updates.json"],
+      "console": "integratedTerminal",
+      "sourceMaps": true
+    },
+    {
+      "name": "API",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/apps/api/dist/main.js",
+      "envFile": "${workspaceFolder}/.env",
+      "console": "integratedTerminal",
+      "sourceMaps": true
+    }
+  ]
+}

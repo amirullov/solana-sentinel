@@ -1,0 +1,33 @@
+[package]
+name = "sentinel-registry"
+version = "0.1.0"
+description = "Immutable operator attestations for Solana Sentinel findings"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "sentinel_registry"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = "=0.32.3"
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = [
+  'cfg(target_os, values("solana"))',
+  'cfg(feature, values("anchor-debug", "custom-heap", "custom-panic", "no-idl", "no-log-ix-name"))'
+] }
+

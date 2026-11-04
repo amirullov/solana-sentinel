@@ -1,0 +1,133 @@
+:root {
+  color-scheme: dark;
+  --bg: #080b0d;
+  --panel: #101518;
+  --line: #263136;
+  --text: #f3f7f5;
+  --muted: #91a09b;
+  --green: #72f6b1;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: radial-gradient(circle at 75% -10%, #123c30 0, transparent 34%), var(--bg);
+  color: var(--text);
+}
+main {
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  min-height: 100vh;
+  padding-bottom: 72px;
+}
+nav {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 650;
+}
+.mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: #07100c;
+  background: var(--green);
+  border-radius: 8px;
+}
+.status {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.hero {
+  padding: 96px 0 72px;
+  max-width: 850px;
+}
+.eyebrow {
+  color: var(--green);
+  letter-spacing: 0.14em;
+  font:
+    650 12px/1.4 ui-monospace,
+    monospace;
+}
+h1 {
+  margin: 20px 0;
+  font-size: clamp(48px, 7vw, 84px);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+.lede {
+  color: var(--muted);
+  max-width: 720px;
+  font-size: 20px;
+  line-height: 1.6;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+}
+article {
+  min-height: 180px;
+  padding: 28px;
+  background: color-mix(in srgb, var(--panel) 90%, transparent);
+  border: 1px solid var(--line);
+}
+article h2 {
+  font-size: 18px;
+  margin: 32px 0 10px;
+}
+article p,
+.notice p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+}
+.dot {
+  display: block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 18px var(--green);
+}
+.notice {
+  margin-top: 24px;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  gap: 24px;
+  border: 1px solid #594c28;
+  border-radius: 14px;
+  background: #18150d;
+}
+@media (max-width: 700px) {
+  .hero {
+    padding-top: 64px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .notice {
+    grid-template-columns: 1fr;
+  }
+  .status {
+    display: none;
+  }
+}

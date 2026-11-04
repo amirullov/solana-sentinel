@@ -1,0 +1,49 @@
+{
+  "name": "solana-sentinel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Security intelligence foundation for monitoring critical Solana program changes.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/amirullov/solana-sentinel.git"
+  },
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "prelint": "pnpm --filter \"./packages/*\" build",
+    "pretypecheck": "pnpm --filter \"./packages/*\" build",
+    "pretest": "pnpm --filter \"./packages/*\" build",
+    "build": "pnpm -r --if-present build",
+    "clean": "pnpm -r --if-present clean",
+    "dev": "pnpm --parallel --filter @sentinel/api --filter @sentinel/web --filter @sentinel/indexer dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "db:up": "docker compose -f infra/docker/compose.yml up -d postgres",
+    "db:down": "docker compose -f infra/docker/compose.yml down",
+    "db:migrate": "node scripts/migrate.mjs",
+    "rust:fmt": "cargo fmt --all -- --check",
+    "rust:lint": "cargo clippy --workspace --all-targets -- -D warnings",
+    "rust:test": "cargo test --workspace"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "16.5.0",
+    "pg": "8.23.1",
+    "prettier": "3.6.2",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.72.1",
+    "vitest": "5.1.0"
+  }
+}

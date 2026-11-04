@@ -1,0 +1,23 @@
+node_modules/
+.pnpm-store/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+target/
+.anchor/
+test-ledger/
+.turbo/
+.env
+.env.local
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*.log
+
+# Solana keys and credentials must never be committed.
+*.json.keypair
+id.json
+deploy/*.json
+

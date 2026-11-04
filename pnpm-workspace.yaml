@@ -1,0 +1,32 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  bufferutil: false
+  utf-8-validate: false
+
+peerDependencyRules:
+  allowedVersions:
+    utf-8-validate: ">=5"
+
+catalog:
+  "@solana/web3.js": 1.98.4
+  "@triton-one/yellowstone-grpc": 10.0.0
+  "@types/node": 24.19.2
+  fastify: 5.12.8
+  pg: 8.23.1
+  typescript: 5.9.3
+  zod: 4.6.7
+
+minimumReleaseAgeExclude:
+  - "@next/env@16.4.5"
+  - "@next/swc-darwin-arm64@16.4.5"
+  - "@next/swc-darwin-x64@16.4.5"
+  - "@next/swc-linux-arm64-gnu@16.4.5"
+  - "@next/swc-linux-arm64-musl@16.4.5"
+  - "@next/swc-linux-x64-gnu@16.4.5"
+  - "@next/swc-linux-x64-musl@16.4.5"
+  - "@next/swc-win32-arm64-msvc@16.4.5"
+  - "@next/swc-win32-x64-msvc@16.4.5"
+  - next@16.4.5

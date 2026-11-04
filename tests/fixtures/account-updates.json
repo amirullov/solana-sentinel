@@ -1,0 +1,35 @@
+[
+  {
+    "cluster": "devnet",
+    "address": "Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4",
+    "signature": "5555555555555555555555555555555555555555555555555555555555555555",
+    "slot": 42,
+    "commitment": "finalized",
+    "observedAt": "2026-11-04T00:00:00.000Z",
+    "loader": "watched-account",
+    "beforeBase64": "AQ==",
+    "afterBase64": "Ag=="
+  },
+  {
+    "cluster": "devnet",
+    "address": "Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4",
+    "signature": "5555555555555555555555555555555555555555555555555555555555555555",
+    "slot": 42,
+    "commitment": "finalized",
+    "observedAt": "2026-11-04T00:00:00.000Z",
+    "loader": "watched-account",
+    "beforeBase64": "AQ==",
+    "afterBase64": "Ag=="
+  },
+  {
+    "cluster": "devnet",
+    "address": "BPFLoaderUpgradeab1e11111111111111111111111",
+    "signature": "6666666666666666666666666666666666666666666666666666666666666666",
+    "slot": 43,
+    "commitment": "finalized",
+    "observedAt": "2026-11-04T00:01:00.000Z",
+    "loader": "watched-account",
+    "beforeBase64": "Aw==",
+    "afterBase64": "Aw=="
+  }
+]

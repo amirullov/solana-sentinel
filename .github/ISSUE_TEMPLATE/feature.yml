@@ -1,0 +1,22 @@
+name: Engineering task
+description: Propose a scoped implementation task
+title: "[Task]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Verifiable outcome
+      description: What observable result should exist when this is done?
+    validations: { required: true }
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and non-goals
+    validations: { required: true }
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test evidence
+      description: Include replay cases, failure cases, and commands where relevant.
+    validations: { required: true }
