@@ -14,8 +14,11 @@
     "@sentinel/config": "workspace:*",
     "@sentinel/core": "workspace:*",
     "@sentinel/database": "workspace:*",
+    "@sentinel/detection": "workspace:*",
     "@sentinel/solana-adapters": "workspace:*",
-    "@triton-one/yellowstone-grpc": "catalog:"
+    "@solana/web3.js": "catalog:",
+    "@triton-one/yellowstone-grpc": "catalog:",
+    "bs58": "catalog:"
   },
   "devDependencies": {
     "@types/node": "catalog:",

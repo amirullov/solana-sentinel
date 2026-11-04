@@ -17,6 +17,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@sentinel/evidence": "workspace:*",
     "@solana/web3.js": "catalog:"
   },
   "devDependencies": {

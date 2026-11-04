@@ -26,11 +26,15 @@ export const ChainEventSchema = z.object({
   slot: z.number().int().nonnegative().safe(),
   commitment: CommitmentSchema,
   observedAt: z.string().datetime(),
+  sourceHash: z.string().regex(/^[a-f0-9]{64}$/),
   beforeHash: z
     .string()
     .regex(/^[a-f0-9]{64}$/)
     .optional(),
-  afterHash: z.string().regex(/^[a-f0-9]{64}$/)
+  afterHash: z
+    .string()
+    .regex(/^[a-f0-9]{64}$/)
+    .optional()
 });
 
 export type ChainEvent = z.infer<typeof ChainEventSchema>;

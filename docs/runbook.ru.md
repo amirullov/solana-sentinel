@@ -10,6 +10,14 @@
 6. Выполнить replay: `pnpm build`, затем `pnpm --filter @sentinel/indexer start -- --replay tests/fixtures/account-updates.json`.
 7. Запустить API и web отдельными задачами VS Code.
 
+## RPC recovery и live ingestion
+
+1. Задать `WATCHED_PROGRAM_IDS` через запятую; для обычных accounts использовать `WATCHED_ACCOUNT_IDS`.
+2. Выполнить `--reconcile`, проверить summary и строки `ingestion_checkpoints`.
+3. Для live режима задать `YELLOWSTONE_ENDPOINT`/`YELLOWSTONE_X_TOKEN` и запустить indexer без флагов.
+4. Yellowstone v10 использует native N-API; live процесс запускается в Linux/Dev Container. Replay/RPC/API работают на Windows.
+5. Если outage содержит больше `RPC_BACKFILL_MAX_SIGNATURES`, indexer останавливается с явной ошибкой и не продвигает cursor.
+
 ## Диагностика
 
 - `/health/live` подтверждает только работоспособность процесса.
@@ -19,7 +27,7 @@
 
 ## Publisher
 
-Publisher намеренно выключен. В foundation-релизе включение завершается ошибкой до отправки транзакции. Снять gate можно только после локальных Anchor integration tests, devnet E2E, проверки key separation и явного review.
+Publisher выключен по умолчанию. Для включения одновременно требуются keypair path и `PUBLISHER_CONFIRM_PROGRAM_DEPLOYED=true`; перед отправкой проверяются executable program и RegistryConfig PDA. Снимать gate следует только после локальных Anchor integration tests, devnet E2E, проверки key separation и явного review.
 
 ## Инцидент с ключом
 

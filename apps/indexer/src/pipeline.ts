@@ -6,6 +6,7 @@ import {
   type SolanaCluster
 } from "@sentinel/core";
 import type { EventRepository } from "@sentinel/database";
+import { detectFinding } from "@sentinel/detection";
 import { decodeUpgradeableLoaderState } from "@sentinel/solana-adapters";
 
 export interface AccountObservation {
@@ -17,6 +18,7 @@ export interface AccountObservation {
   readonly commitment: "processed" | "confirmed" | "finalized";
   readonly observedAt: string;
   readonly loader: "loader-v3" | "watched-account";
+  readonly eventTypeHint?: ChainEvent["type"];
   readonly beforeBase64?: string;
   readonly afterBase64: string;
 }
@@ -32,8 +34,10 @@ export function classifyObservation(
     ? Buffer.from(observation.beforeBase64, "base64")
     : undefined;
   const after = Buffer.from(observation.afterBase64, "base64");
+  if (observation.eventTypeHint) return observation.eventTypeHint;
   if (before && before.equals(after)) return undefined;
-  if (observation.loader !== "loader-v3" || !before) return "WATCHED_ACCOUNT_CHANGED";
+  if (!before) return undefined;
+  if (observation.loader !== "loader-v3") return "WATCHED_ACCOUNT_CHANGED";
 
   const previousState = decodeUpgradeableLoaderState(before);
   const nextState = decodeUpgradeableLoaderState(after);
@@ -52,30 +56,59 @@ export async function processObservation(
   observation: AccountObservation,
   repository: EventRepository
 ): Promise<{ readonly status: "ignored" | "inserted" | "duplicate"; readonly event?: ChainEvent }> {
-  const type = classifyObservation(observation);
+  const previous = observation.beforeBase64
+    ? undefined
+    : await repository.getLatestSnapshot(observation.cluster, observation.address);
+  const enriched: AccountObservation = {
+    ...observation,
+    ...(observation.beforeBase64
+      ? {}
+      : previous?.dataBase64
+        ? { beforeBase64: previous.dataBase64 }
+        : {})
+  };
+  const afterData = Buffer.from(enriched.afterBase64, "base64");
+  const afterHash = sha256(afterData);
+  await repository.saveSnapshot({
+    cluster: enriched.cluster,
+    address: enriched.address,
+    slot: enriched.slot,
+    dataHash: afterHash,
+    dataBase64: enriched.afterBase64,
+    signature: enriched.signature,
+    commitment: enriched.commitment
+  });
+
+  const type = classifyObservation(enriched);
   if (!type) return { status: "ignored" };
 
   const identity = {
-    cluster: observation.cluster,
-    targetAddress: observation.address,
-    signature: observation.signature,
+    cluster: enriched.cluster,
+    targetAddress: enriched.address,
+    signature: enriched.signature,
     type
   } as const;
   const event = parseChainEvent({
     eventId: createEventId(identity),
     type,
-    cluster: observation.cluster,
-    targetAddress: observation.address,
-    programAddress: observation.programAddress,
-    signature: observation.signature,
-    slot: observation.slot,
-    commitment: observation.commitment,
-    observedAt: observation.observedAt,
-    beforeHash: observation.beforeBase64
-      ? sha256(Buffer.from(observation.beforeBase64, "base64"))
+    cluster: enriched.cluster,
+    targetAddress: enriched.address,
+    programAddress: enriched.programAddress,
+    signature: enriched.signature,
+    slot: enriched.slot,
+    commitment: enriched.commitment,
+    observedAt: enriched.observedAt,
+    sourceHash: sha256(
+      Buffer.from(
+        `${enriched.cluster}\0${enriched.signature}\0${enriched.slot}\0${enriched.address}\0${afterHash}`,
+        "utf8"
+      )
+    ),
+    beforeHash: enriched.beforeBase64
+      ? sha256(Buffer.from(enriched.beforeBase64, "base64"))
       : undefined,
-    afterHash: sha256(Buffer.from(observation.afterBase64, "base64"))
+    afterHash
   });
-  const status = await repository.save(event);
+  const status = await repository.saveDetected(event, detectFinding(event));
   return { status, event };
 }

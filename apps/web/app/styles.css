@@ -117,6 +117,64 @@ article p,
   border-radius: 14px;
   background: #18150d;
 }
+.feed {
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--panel);
+}
+.feedTitle {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.feedTitle span,
+.empty {
+  color: var(--muted);
+}
+.empty {
+  padding: 32px 24px;
+  margin: 0;
+}
+.finding {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 18px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.finding:last-child {
+  border-bottom: 0;
+}
+.finding p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+.severity {
+  align-self: start;
+  width: fit-content;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font:
+    600 11px/1 ui-monospace,
+    monospace;
+  text-transform: uppercase;
+}
+.severity-high,
+.severity-critical {
+  border-color: #7b3d42;
+  color: #ff9da5;
+  background: #241012;
+}
+.severity-medium {
+  border-color: #6a592b;
+  color: #f6d572;
+  background: #211b0b;
+}
 @media (max-width: 700px) {
   .hero {
     padding-top: 64px;

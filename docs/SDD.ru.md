@@ -4,7 +4,7 @@
 | --------------------------- | --------------------------------------------- |
 | Версия                      | 0.1.0 Foundation                              |
 | Дата                        | 4 ноября 2026                                 |
-| Статус                      | Implemented foundation, pre-devnet            |
+| Статус                      | Functional pre-devnet implementation          |
 | Авторы                      | Solana Sentinel contributors                  |
 | Язык нормативных требований | Русский; ключевые идентификаторы — английские |
 
@@ -358,31 +358,33 @@ deploy → upgrade → Yellowstone/RPC → event → finding → API → registr
 
 ## 17. Фактический статус на 4 ноября 2026
 
-| Область                      | Статус                                   | Доказательство/ограничение                      |
-| ---------------------------- | ---------------------------------------- | ----------------------------------------------- |
-| Monorepo и toolchain pins    | Реализовано                              | workspace manifests, lockfiles после install    |
-| Event ID/evidence hashing    | Реализовано                              | TypeScript unit tests                           |
-| Loader-v3 state decoder      | Реализовано, стартовый                   | Program/ProgramData tests; не полный tx decoder |
-| Replay/idempotency           | Реализовано, fixture foundation          | synthetic fixture; historical corpus ещё нужен  |
-| PostgreSQL schema            | Реализовано                              | migration + CI double-apply                     |
-| API/dashboard                | Foundation                               | локальные endpoints и честный status UI         |
-| Anchor registry              | Реализован на уровне source/unit compile | local-validator integration ещё не выполнен     |
-| Yellowstone live correlation | Не реализовано                           | gated с явной ошибкой                           |
-| RPC reconciliation           | Не реализовано                           | milestone 1                                     |
-| Webhook delivery             | Не реализовано полностью                 | schema/worker foundation                        |
-| Devnet deployment/E2E        | Не выполнено                             | signatures отсутствуют                          |
-| Mainnet deployment           | Не выполнено                             | Program ID отсутствует                          |
-| Verified build               | Не выполнено                             | verification artifact отсутствует               |
+| Область                      | Статус                                   | Доказательство/ограничение                                  |
+| ---------------------------- | ---------------------------------------- | ----------------------------------------------------------- |
+| Monorepo и toolchain pins    | Реализовано                              | workspace manifests, lockfiles после install                |
+| Event ID/evidence hashing    | Реализовано                              | TypeScript unit tests                                       |
+| Loader-v3 state decoder      | Реализовано, стартовый                   | Program/ProgramData tests; не полный tx decoder             |
+| Replay/idempotency           | Реализовано, fixture foundation          | synthetic fixture; historical corpus ещё нужен              |
+| PostgreSQL schema            | Реализовано                              | migration + CI double-apply                                 |
+| API/dashboard                | Реализовано, pre-production              | findings/evidence/status API и runtime dashboard            |
+| Anchor registry              | Реализован на уровне source/unit compile | local-validator integration ещё не выполнен                 |
+| Yellowstone live correlation | Реализовано, внешний E2E не выполнен     | finalized replay/reconnect/correlation; нужен provider      |
+| RPC reconciliation           | Реализовано, внешний E2E не выполнен     | durable cursor/backfill/gap gate; нужен test target         |
+| Detection engine             | Реализовано, стартовый набор правил      | versioned loader-v3 rules и unit tests                      |
+| Webhook delivery             | Реализовано, pre-production              | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E |
+| Publisher/registry SDK       | Реализовано, выключено fail-closed       | транзакции не отправлялись; требуется deployed program      |
+| Devnet deployment/E2E        | Не выполнено                             | signatures отсутствуют                                      |
+| Mainnet deployment           | Не выполнено                             | Program ID отсутствует                                      |
+| Verified build               | Не выполнено                             | verification artifact отсутствует                           |
 
 ## 18. Roadmap
 
-1. **Foundation** — reproducible clone, local checks, schema и SDD.
-2. **Reliable loader-v3 detection** — Yellowstone correlation, RPC backfill, historical replay corpus.
-3. **Registry integration** — local validator tests, TS instruction builder, independent verifier.
-4. **Working product** — findings API, evidence viewer, safe webhooks, monitoring.
-5. **Devnet validation** — controlled upgrades и публичные test artifacts.
-6. **Mainnet readiness** — security review, release verification, key separation, manual deployment gate.
-7. **Hardening** — loader-v4 adapter, provider failover, fault injection и измеренные SLO.
+1. **Foundation — выполнено:** reproducible clone, local checks, schema и SDD.
+2. **Reliable loader-v3 detection — реализовано в коде:** Yellowstone correlation, RPC backfill и fixture replay; historical corpus и внешний provider E2E ещё нужны.
+3. **Registry integration — частично выполнено:** TS instruction builder/verifier и gated publisher готовы; local-validator tests ещё нужны.
+4. **Working product — частично выполнено:** findings API, evidence endpoints, dashboard и safe webhooks готовы; production monitoring и внешний delivery E2E ещё нужны.
+5. **Devnet validation — следующий milestone:** controlled upgrades и публичные test artifacts.
+6. **Mainnet readiness:** security review, release verification, key separation, manual deployment gate.
+7. **Hardening:** loader-v4 adapter, provider failover, fault injection и измеренные SLO.
 
 ## 19. Открытые вопросы
 

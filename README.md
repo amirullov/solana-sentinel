@@ -4,16 +4,20 @@
 
 Solana Sentinel — foundation для security-инфраструктуры, которая фиксирует критические изменения Solana-программ и аккаунтов, формирует воспроизводимые evidence hashes и в будущем публикует выбранные finalized findings в собственный on-chain registry.
 
-> Текущий честный статус: локальная стартовая реализация. Mainnet deployment, работающий production-monitoring и verified build **не выполнялись**. Program ID в конфигурации — development placeholder.
+> Текущий честный статус: функциональная pre-devnet реализация, проверенная локальными тестами и CI. Внешний Yellowstone/RPC E2E, devnet/mainnet deployment, production-monitoring и verified build **не выполнялись**. Program ID в конфигурации — development placeholder.
 
 ## Что уже есть
 
 - детерминированные event ID и канонические evidence hashes;
-- loader-v3 decoder для Program/ProgramData accounts;
+- loader-v3 account и transaction instruction decoders;
+- Yellowstone finalized stream с replay/reconnect и корреляцией transaction/account;
+- RPC reconciliation с durable signature cursor и защитой от необнаруженного большого gap;
 - идемпотентный replay pipeline и fixture tests;
 - PostgreSQL schema с event log, snapshots, findings, attestations, checkpoints и outbox;
-- Anchor registry: initialize, immutable finding, publisher rotation, correction;
-- Fastify API foundation и Next.js status dashboard;
+- versioned detection rules и атомарное сохранение evidence-backed findings;
+- Anchor registry и TypeScript SDK/verifier: initialize, immutable finding, publisher rotation, correction;
+- fail-closed publisher, безопасная доставка подписанных webhooks;
+- Fastify API и runtime Next.js dashboard;
 - Docker Compose, Dev Container, VS Code workspace/tasks/launch;
 - CI для TypeScript, Rust и повторного применения миграций.
 
@@ -31,6 +35,14 @@ cargo test --workspace
 pnpm --filter @sentinel/indexer start -- --replay tests/fixtures/account-updates.json
 ```
 
+Для RPC recovery укажите `WATCHED_PROGRAM_IDS` и выполните:
+
+```bash
+pnpm --filter @sentinel/indexer start -- --reconcile
+```
+
+Live mode дополнительно требует `YELLOWSTONE_ENDPOINT` и, если нужен провайдеру, `YELLOWSTONE_X_TOKEN`. Нативный Yellowstone client запускайте в Linux/Dev Container; текущий пакет не поставляет Windows N-API binary.
+
 Для VS Code откройте `solana-sentinel.code-workspace`.
 
 ## Структура
@@ -46,7 +58,7 @@ tests/      replay fixtures
 
 ## Следующий проверяемый milestone
 
-Milestone 1 — полноценная корреляция Yellowstone account/transaction/slot streams с RPC backfill, checkpoint recovery и replay известных loader-v3 upgrade transactions. До её завершения live ingestion намеренно gated.
+Milestone 2 — local-validator Anchor integration suite и контролируемый devnet E2E. Live/RPC код реализован и тестируется fixtures/CI, но без предоставленного Yellowstone endpoint и watched devnet program не заявляется как прошедший внешний E2E.
 
 Подробности: [Software Design Document](docs/SDD.ru.md), [threat model](docs/threat-model.ru.md), [runbook](docs/runbook.ru.md).
 

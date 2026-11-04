@@ -1,8 +1,31 @@
-import type { ChainEvent } from "@sentinel/core";
+import type { ChainEvent, Finding, SolanaCluster } from "@sentinel/core";
 import { Pool, type PoolConfig } from "pg";
+
+export interface AccountSnapshot {
+  readonly cluster: SolanaCluster;
+  readonly address: string;
+  readonly slot: number;
+  readonly dataHash: string;
+  readonly dataBase64?: string;
+  readonly signature?: string;
+  readonly commitment: "processed" | "confirmed" | "finalized";
+}
+
+export interface IngestionCheckpoint {
+  readonly sourceId: string;
+  readonly cluster: SolanaCluster;
+  readonly finalizedSlot: number;
+  readonly cursorSignature?: string;
+  readonly observedFinalizedSlot?: number;
+}
 
 export interface EventRepository {
   save(event: ChainEvent): Promise<"inserted" | "duplicate">;
+  saveDetected(event: ChainEvent, finding: Finding): Promise<"inserted" | "duplicate">;
+  getLatestSnapshot(cluster: SolanaCluster, address: string): Promise<AccountSnapshot | undefined>;
+  saveSnapshot(snapshot: AccountSnapshot): Promise<void>;
+  getCheckpoint(sourceId: string): Promise<IngestionCheckpoint | undefined>;
+  advanceCheckpoint(checkpoint: IngestionCheckpoint): Promise<void>;
 }
 
 export class PostgresEventRepository implements EventRepository {
@@ -16,8 +39,8 @@ export class PostgresEventRepository implements EventRepository {
     const result = await this.#pool.query(
       `INSERT INTO chain_events
         (event_id, event_type, cluster, target_address, program_address, signature, slot,
-         commitment, observed_at, before_hash, after_hash)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         commitment, observed_at, source_hash, before_hash, after_hash)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
        ON CONFLICT (event_id) DO NOTHING`,
       [
         event.eventId,
@@ -29,11 +52,164 @@ export class PostgresEventRepository implements EventRepository {
         event.slot,
         event.commitment,
         event.observedAt,
+        event.sourceHash,
         event.beforeHash ?? null,
-        event.afterHash
+        event.afterHash ?? null
       ]
     );
     return result.rowCount === 1 ? "inserted" : "duplicate";
+  }
+
+  async saveDetected(event: ChainEvent, finding: Finding): Promise<"inserted" | "duplicate"> {
+    const client = await this.#pool.connect();
+    try {
+      await client.query("BEGIN");
+      const eventResult = await client.query(
+        `INSERT INTO chain_events
+          (event_id, event_type, cluster, target_address, program_address, signature, slot,
+           commitment, observed_at, source_hash, before_hash, after_hash)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+         ON CONFLICT (event_id) DO NOTHING`,
+        [
+          event.eventId,
+          event.type,
+          event.cluster,
+          event.targetAddress,
+          event.programAddress ?? null,
+          event.signature,
+          event.slot,
+          event.commitment,
+          event.observedAt,
+          event.sourceHash,
+          event.beforeHash ?? null,
+          event.afterHash ?? null
+        ]
+      );
+      if (eventResult.rowCount !== 1) {
+        await client.query("ROLLBACK");
+        return "duplicate";
+      }
+      await client.query(
+        `INSERT INTO findings
+          (finding_id, event_id, rule_id, rule_version, severity, title, evidence_hash, evidence, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)
+         ON CONFLICT (event_id, rule_id) DO NOTHING`,
+        [
+          finding.findingId,
+          finding.eventId,
+          finding.ruleId,
+          finding.ruleVersion,
+          finding.severity,
+          finding.title,
+          finding.evidenceHash,
+          JSON.stringify(finding.evidence),
+          finding.createdAt
+        ]
+      );
+      await client.query("COMMIT");
+      return "inserted";
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async getLatestSnapshot(
+    cluster: SolanaCluster,
+    address: string
+  ): Promise<AccountSnapshot | undefined> {
+    const result = await this.#pool.query<{
+      cluster: SolanaCluster;
+      address: string;
+      slot: string;
+      data_hash: string;
+      data_base64: string | null;
+      signature: string | null;
+      commitment: "processed" | "confirmed" | "finalized";
+    }>(
+      `SELECT cluster, address, slot::text, data_hash, data_base64, signature, commitment
+       FROM account_snapshots WHERE cluster = $1 AND address = $2
+       ORDER BY slot DESC, snapshot_id DESC LIMIT 1`,
+      [cluster, address]
+    );
+    const row = result.rows[0];
+    if (!row) return undefined;
+    return {
+      cluster: row.cluster,
+      address: row.address,
+      slot: Number(row.slot),
+      dataHash: row.data_hash,
+      ...(row.data_base64 ? { dataBase64: row.data_base64 } : {}),
+      ...(row.signature ? { signature: row.signature } : {}),
+      commitment: row.commitment
+    };
+  }
+
+  async saveSnapshot(snapshot: AccountSnapshot): Promise<void> {
+    await this.#pool.query(
+      `INSERT INTO account_snapshots
+        (cluster, address, slot, data_hash, data_base64, signature, commitment)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       ON CONFLICT (cluster, address, slot, data_hash) DO NOTHING`,
+      [
+        snapshot.cluster,
+        snapshot.address,
+        snapshot.slot,
+        snapshot.dataHash,
+        snapshot.dataBase64 ?? null,
+        snapshot.signature ?? null,
+        snapshot.commitment
+      ]
+    );
+  }
+
+  async getCheckpoint(sourceId: string): Promise<IngestionCheckpoint | undefined> {
+    const result = await this.#pool.query<{
+      source_id: string;
+      cluster: SolanaCluster;
+      finalized_slot: string;
+      cursor_signature: string | null;
+      observed_finalized_slot: string | null;
+    }>(
+      `SELECT source_id, cluster, finalized_slot::text, cursor_signature,
+              observed_finalized_slot::text
+       FROM ingestion_checkpoints WHERE source_id = $1`,
+      [sourceId]
+    );
+    const row = result.rows[0];
+    if (!row) return undefined;
+    return {
+      sourceId: row.source_id,
+      cluster: row.cluster,
+      finalizedSlot: Number(row.finalized_slot),
+      ...(row.cursor_signature ? { cursorSignature: row.cursor_signature } : {}),
+      ...(row.observed_finalized_slot
+        ? { observedFinalizedSlot: Number(row.observed_finalized_slot) }
+        : {})
+    };
+  }
+
+  async advanceCheckpoint(checkpoint: IngestionCheckpoint): Promise<void> {
+    await this.#pool.query(
+      `INSERT INTO ingestion_checkpoints
+        (source_id, cluster, finalized_slot, cursor_signature, observed_finalized_slot, updated_at)
+       VALUES ($1,$2,$3,$4,$5,now())
+       ON CONFLICT (source_id) DO UPDATE SET
+         finalized_slot = EXCLUDED.finalized_slot,
+         cursor_signature = EXCLUDED.cursor_signature,
+         observed_finalized_slot = EXCLUDED.observed_finalized_slot,
+         updated_at = now()
+       WHERE EXCLUDED.finalized_slot >= ingestion_checkpoints.finalized_slot`,
+      [
+        checkpoint.sourceId,
+        checkpoint.cluster,
+        checkpoint.finalizedSlot,
+        checkpoint.cursorSignature ?? null,
+        checkpoint.observedFinalizedSlot ?? null
+      ]
+    );
   }
 
   async close(): Promise<void> {
@@ -43,10 +219,48 @@ export class PostgresEventRepository implements EventRepository {
 
 export class InMemoryEventRepository implements EventRepository {
   readonly events = new Map<string, ChainEvent>();
+  readonly findings = new Map<string, Finding>();
+  readonly snapshots = new Map<string, AccountSnapshot[]>();
+  readonly checkpoints = new Map<string, IngestionCheckpoint>();
 
   save(event: ChainEvent): Promise<"inserted" | "duplicate"> {
     if (this.events.has(event.eventId)) return Promise.resolve("duplicate");
     this.events.set(event.eventId, event);
     return Promise.resolve("inserted");
+  }
+
+  async saveDetected(event: ChainEvent, finding: Finding): Promise<"inserted" | "duplicate"> {
+    const status = await this.save(event);
+    if (status === "inserted") this.findings.set(finding.findingId, finding);
+    return status;
+  }
+
+  getLatestSnapshot(cluster: SolanaCluster, address: string): Promise<AccountSnapshot | undefined> {
+    const snapshots = this.snapshots.get(`${cluster}:${address}`) ?? [];
+    return Promise.resolve(snapshots.toSorted((a, b) => b.slot - a.slot)[0]);
+  }
+
+  saveSnapshot(snapshot: AccountSnapshot): Promise<void> {
+    const key = `${snapshot.cluster}:${snapshot.address}`;
+    const snapshots = this.snapshots.get(key) ?? [];
+    if (
+      !snapshots.some((item) => item.slot === snapshot.slot && item.dataHash === snapshot.dataHash)
+    ) {
+      snapshots.push(snapshot);
+      this.snapshots.set(key, snapshots);
+    }
+    return Promise.resolve();
+  }
+
+  getCheckpoint(sourceId: string): Promise<IngestionCheckpoint | undefined> {
+    return Promise.resolve(this.checkpoints.get(sourceId));
+  }
+
+  advanceCheckpoint(checkpoint: IngestionCheckpoint): Promise<void> {
+    const current = this.checkpoints.get(checkpoint.sourceId);
+    if (!current || checkpoint.finalizedSlot >= current.finalizedSlot) {
+      this.checkpoints.set(checkpoint.sourceId, checkpoint);
+    }
+    return Promise.resolve();
   }
 }
