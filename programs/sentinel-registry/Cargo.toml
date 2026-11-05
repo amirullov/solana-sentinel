@@ -23,7 +23,7 @@ custom-panic = []
 idl-build = ["anchor-lang/idl-build"]
 
 [dependencies]
-anchor-lang = "=0.32.3"
+anchor-lang = "=1.2.2"
 
 [lints.rust]
 unexpected_cfgs = { level = "allow", check-cfg = [
