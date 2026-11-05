@@ -12,7 +12,7 @@ peerDependencyRules:
     utf-8-validate: ">=5"
 
 catalog:
-  "@solana/web3.js": 1.98.4
+  "@solana/web3.js": 3.1.1
   "@triton-one/yellowstone-grpc": 10.0.0
   "@types/node": 24.19.2
   bs58: 6.0.0
