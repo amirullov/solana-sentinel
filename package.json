@@ -41,7 +41,7 @@
     "eslint-config-prettier": "10.1.8",
     "globals": "16.5.0",
     "pg": "8.23.1",
-    "prettier": "3.6.2",
+    "prettier": "3.9.10",
     "typescript": "5.9.3",
     "typescript-eslint": "8.72.1",
     "vitest": "5.1.0"
