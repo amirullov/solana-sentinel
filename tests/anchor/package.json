@@ -1,0 +1,13 @@
+{
+  "name": "@sentinel/anchor-integration",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:local": "node --test local-validator.integration.mjs"
+  },
+  "dependencies": {
+    "@sentinel/registry-sdk": "workspace:*",
+    "@solana/web3.js": "catalog:"
+  }
+}

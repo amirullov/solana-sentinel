@@ -28,7 +28,7 @@ describe("loader-v3 instruction parser", () => {
   it("decodes Upgrade account roles", () => {
     const facts = parseLoaderV3Instructions(
       transaction(LOADER_V3_INSTRUCTION_TAGS.UPGRADE, [1, 2]),
-      new Map()
+      new Map([[programData, program]])
     );
     expect(facts).toHaveLength(1);
     expect(facts[0]).toMatchObject({
@@ -36,6 +36,17 @@ describe("loader-v3 instruction parser", () => {
       programDataAddress: programData,
       programAddress: program
     });
+  });
+
+  it("ignores upgrades of unrelated programs even in a watched transaction", () => {
+    const input = transaction(LOADER_V3_INSTRUCTION_TAGS.UPGRADE, [1, 2]);
+    expect(parseLoaderV3Instructions(input, new Map())).toEqual([]);
+    expect(
+      parseLoaderV3Instructions(
+        input,
+        new Map([[programData, UPGRADEABLE_LOADER_PROGRAM_ID.toBase58()]])
+      )
+    ).toEqual([]);
   });
 
   it("only reports authority changes for known ProgramData accounts", () => {

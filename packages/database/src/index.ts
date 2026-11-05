@@ -19,13 +19,26 @@ export interface IngestionCheckpoint {
   readonly observedFinalizedSlot?: number;
 }
 
+export type ServiceState = "starting" | "healthy" | "degraded" | "stopped";
+
+export interface ServiceStatus {
+  readonly serviceId: string;
+  readonly state: ServiceState;
+  readonly details?: Record<string, unknown>;
+}
+
 export interface EventRepository {
   save(event: ChainEvent): Promise<"inserted" | "duplicate">;
   saveDetected(event: ChainEvent, finding: Finding): Promise<"inserted" | "duplicate">;
-  getLatestSnapshot(cluster: SolanaCluster, address: string): Promise<AccountSnapshot | undefined>;
+  getLatestSnapshot(
+    cluster: SolanaCluster,
+    address: string,
+    beforeSlot?: number
+  ): Promise<AccountSnapshot | undefined>;
   saveSnapshot(snapshot: AccountSnapshot): Promise<void>;
   getCheckpoint(sourceId: string): Promise<IngestionCheckpoint | undefined>;
   advanceCheckpoint(checkpoint: IngestionCheckpoint): Promise<void>;
+  updateServiceStatus(status: ServiceStatus): Promise<void>;
 }
 
 export class PostgresEventRepository implements EventRepository {
@@ -92,8 +105,7 @@ export class PostgresEventRepository implements EventRepository {
       await client.query(
         `INSERT INTO findings
           (finding_id, event_id, rule_id, rule_version, severity, title, evidence_hash, evidence, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)
-         ON CONFLICT (event_id, rule_id) DO NOTHING`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9)`,
         [
           finding.findingId,
           finding.eventId,
@@ -104,6 +116,42 @@ export class PostgresEventRepository implements EventRepository {
           finding.evidenceHash,
           JSON.stringify(finding.evidence),
           finding.createdAt
+        ]
+      );
+      await client.query(
+        `INSERT INTO notification_outbox (finding_id, destination_id, payload)
+         SELECT $1::uuid, d.destination_id,
+                jsonb_build_object(
+                  'schema', 'solana-sentinel/webhook/v1',
+                  'findingId', $1::text,
+                  'eventId', $2::text,
+                  'ruleId', $3::text,
+                  'ruleVersion', $4::integer,
+                  'severity', $5::text,
+                  'title', $6::text,
+                  'evidenceHash', $7::text,
+                  'cluster', $8::text,
+                  'targetAddress', $9::text,
+                  'signature', $10::text,
+                  'slot', $11::bigint,
+                  'eventType', $12::text
+                )
+         FROM webhook_destinations d
+         WHERE d.enabled
+         ON CONFLICT (finding_id, destination_id) DO NOTHING`,
+        [
+          finding.findingId,
+          finding.eventId,
+          finding.ruleId,
+          finding.ruleVersion,
+          finding.severity,
+          finding.title,
+          finding.evidenceHash,
+          event.cluster,
+          event.targetAddress,
+          event.signature,
+          event.slot,
+          event.type
         ]
       );
       await client.query("COMMIT");
@@ -118,7 +166,8 @@ export class PostgresEventRepository implements EventRepository {
 
   async getLatestSnapshot(
     cluster: SolanaCluster,
-    address: string
+    address: string,
+    beforeSlot?: number
   ): Promise<AccountSnapshot | undefined> {
     const result = await this.#pool.query<{
       cluster: SolanaCluster;
@@ -130,9 +179,10 @@ export class PostgresEventRepository implements EventRepository {
       commitment: "processed" | "confirmed" | "finalized";
     }>(
       `SELECT cluster, address, slot::text, data_hash, data_base64, signature, commitment
-       FROM account_snapshots WHERE cluster = $1 AND address = $2
+       FROM account_snapshots
+       WHERE cluster = $1 AND address = $2 AND ($3::bigint IS NULL OR slot < $3::bigint)
        ORDER BY slot DESC, snapshot_id DESC LIMIT 1`,
-      [cluster, address]
+      [cluster, address, beforeSlot ?? null]
     );
     const row = result.rows[0];
     if (!row) return undefined;
@@ -212,6 +262,18 @@ export class PostgresEventRepository implements EventRepository {
     );
   }
 
+  async updateServiceStatus(status: ServiceStatus): Promise<void> {
+    await this.#pool.query(
+      `INSERT INTO service_status (service_id, state, details, heartbeat_at)
+       VALUES ($1, $2, $3::jsonb, now())
+       ON CONFLICT (service_id) DO UPDATE SET
+         state = EXCLUDED.state,
+         details = EXCLUDED.details,
+         heartbeat_at = EXCLUDED.heartbeat_at`,
+      [status.serviceId, status.state, JSON.stringify(status.details ?? {})]
+    );
+  }
+
   async close(): Promise<void> {
     await this.#pool.end();
   }
@@ -222,6 +284,7 @@ export class InMemoryEventRepository implements EventRepository {
   readonly findings = new Map<string, Finding>();
   readonly snapshots = new Map<string, AccountSnapshot[]>();
   readonly checkpoints = new Map<string, IngestionCheckpoint>();
+  readonly serviceStatuses = new Map<string, ServiceStatus>();
 
   save(event: ChainEvent): Promise<"inserted" | "duplicate"> {
     if (this.events.has(event.eventId)) return Promise.resolve("duplicate");
@@ -235,9 +298,17 @@ export class InMemoryEventRepository implements EventRepository {
     return status;
   }
 
-  getLatestSnapshot(cluster: SolanaCluster, address: string): Promise<AccountSnapshot | undefined> {
+  getLatestSnapshot(
+    cluster: SolanaCluster,
+    address: string,
+    beforeSlot?: number
+  ): Promise<AccountSnapshot | undefined> {
     const snapshots = this.snapshots.get(`${cluster}:${address}`) ?? [];
-    return Promise.resolve(snapshots.toSorted((a, b) => b.slot - a.slot)[0]);
+    return Promise.resolve(
+      snapshots
+        .filter((snapshot) => beforeSlot === undefined || snapshot.slot < beforeSlot)
+        .toSorted((a, b) => b.slot - a.slot)[0]
+    );
   }
 
   saveSnapshot(snapshot: AccountSnapshot): Promise<void> {
@@ -261,6 +332,11 @@ export class InMemoryEventRepository implements EventRepository {
     if (!current || checkpoint.finalizedSlot >= current.finalizedSlot) {
       this.checkpoints.set(checkpoint.sourceId, checkpoint);
     }
+    return Promise.resolve();
+  }
+
+  updateServiceStatus(status: ServiceStatus): Promise<void> {
+    this.serviceStatuses.set(status.serviceId, status);
     return Promise.resolve();
   }
 }

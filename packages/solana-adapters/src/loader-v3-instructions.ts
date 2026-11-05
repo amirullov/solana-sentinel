@@ -67,6 +67,7 @@ export function parseLoaderV3Instructions(
       const programDataAddress = transaction.accountKeys[instruction.accounts[0] ?? -1];
       const programAddress = transaction.accountKeys[instruction.accounts[1] ?? -1];
       if (!programDataAddress || !programAddress) return;
+      if (programByProgramData.get(programDataAddress) !== programAddress) return;
       facts.push({
         type: "PROGRAM_UPGRADED",
         signature: transaction.signature,

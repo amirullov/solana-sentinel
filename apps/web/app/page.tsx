@@ -12,7 +12,7 @@ interface FindingRow {
 
 interface StatusResponse {
   state: string;
-  checkpoints: Array<{ lag_slots: string }>;
+  checkpoints: Array<{ lag_slots: string | null }>;
   claims: { mainnetDeployed: boolean; verifiedBuild: boolean };
 }
 
@@ -40,12 +40,15 @@ function short(value: string): string {
 
 export default async function HomePage() {
   const { findings, status } = await loadDashboard();
-  const maxLag = Math.max(0, ...(status?.checkpoints.map((item) => Number(item.lag_slots)) ?? []));
+  const observedLags = status?.checkpoints
+    .map((item) => item.lag_slots)
+    .filter((lag): lag is string => lag !== null);
+  const maxLag = observedLags?.length ? Math.max(...observedLags.map(Number)) : undefined;
   const capabilities = [
-    ["Findings", String(findings.length)],
+    ["Recent findings", String(findings.length)],
     ["Indexer", status?.state ?? "offline"],
-    ["Finalized lag", status ? `${maxLag} slots` : "unknown"],
-    ["Registry", status?.claims.mainnetDeployed ? "mainnet" : "not deployed"]
+    ["Finalized lag", maxLag === undefined ? "unknown" : `${maxLag} slots`],
+    ["Registry", status?.claims.mainnetDeployed ? "mainnet" : "mainnet not deployed"]
   ] as const;
 
   return (
@@ -53,7 +56,7 @@ export default async function HomePage() {
       <nav>
         <span className="mark">S</span>
         <span>Solana Sentinel</span>
-        <span className="status">Devnet-ready · mainnet not deployed</span>
+        <span className="status">Pre-devnet · mainnet not deployed</span>
       </nav>
       <section className="hero">
         <p className="eyebrow">ON-CHAIN SECURITY INTELLIGENCE</p>

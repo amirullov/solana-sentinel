@@ -14,5 +14,5 @@ cluster = "Localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "pnpm test"
+test = "pnpm --filter @sentinel/anchor-integration test:local"
 

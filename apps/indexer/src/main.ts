@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import { InMemoryEventRepository, PostgresEventRepository } from "@sentinel/database";
 import { loadConfig } from "@sentinel/config";
 import { Connection } from "@solana/web3.js";
+import { seedInitialSnapshots } from "./bootstrap.js";
 import { discoverWatchTargets } from "./discovery.js";
 import { reconcileLoaderV3 } from "./reconciliation.js";
 import { replayFile } from "./replay.js";
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
   const config = loadConfig();
   const repository = new PostgresEventRepository({ connectionString: config.DATABASE_URL });
   try {
+    await repository.updateServiceStatus({ serviceId: "indexer", state: "starting" });
     const connection = new Connection(config.SOLANA_RPC_URL, "finalized");
     const discovery = await discoverWatchTargets(
       connection,
@@ -37,21 +39,43 @@ async function main(): Promise<void> {
       { cluster: config.SOLANA_CLUSTER, maxSignatures: config.RPC_BACKFILL_MAX_SIGNATURES }
     );
     process.stdout.write(`${JSON.stringify({ reconciliation: summary })}\n`);
-    if (process.argv.includes("--reconcile")) return;
+    if (process.argv.includes("--reconcile")) {
+      if (config.WATCHED_ACCOUNT_IDS.length > 0) {
+        throw new Error(
+          "RPC-only reconciliation cannot reconstruct historical watched-account bytes; use Yellowstone replay"
+        );
+      }
+      await repository.updateServiceStatus({
+        serviceId: "indexer",
+        state: "stopped",
+        details: { mode: "reconcile-only" }
+      });
+      return;
+    }
     if (!config.YELLOWSTONE_ENDPOINT) {
       throw new Error(
         "YELLOWSTONE_ENDPOINT is required for live mode; use --reconcile for RPC-only recovery"
       );
     }
-    const checkpoints = await Promise.all(
+    const baselineSlot = await seedInitialSnapshots(
+      connection,
+      discovery.targets,
+      config.SOLANA_CLUSTER,
+      repository
+    );
+    const liveCheckpoint = await repository.getCheckpoint(`yellowstone:${config.SOLANA_CLUSTER}`);
+    const rpcCheckpoints = await Promise.all(
       [...discovery.programByProgramData.keys()].map((address) =>
         repository.getCheckpoint(`rpc:${config.SOLANA_CLUSTER}:${address}`)
       )
     );
-    const fromSlot = checkpoints
-      .map((checkpoint) => checkpoint?.finalizedSlot)
-      .filter((slot): slot is number => slot !== undefined)
-      .sort((left, right) => left - right)[0];
+    const fromSlot = Math.min(
+      baselineSlot,
+      ...(liveCheckpoint ? [liveCheckpoint.finalizedSlot] : []),
+      ...rpcCheckpoints
+        .map((checkpoint) => checkpoint?.finalizedSlot)
+        .filter((slot): slot is number => slot !== undefined)
+    );
     const controller = new AbortController();
     const stop = () => controller.abort();
     process.once("SIGINT", stop);
@@ -64,11 +88,21 @@ async function main(): Promise<void> {
         cluster: config.SOLANA_CLUSTER,
         targets: discovery.targets,
         programByProgramData: discovery.programByProgramData,
-        ...(fromSlot !== undefined ? { fromSlot } : {})
+        fromSlot
       },
       repository,
       controller.signal
     );
+    await repository.updateServiceStatus({ serviceId: "indexer", state: "stopped" });
+  } catch (error) {
+    await repository
+      .updateServiceStatus({
+        serviceId: "indexer",
+        state: "degraded",
+        details: { error: error instanceof Error ? error.message.slice(0, 500) : "unknown" }
+      })
+      .catch(() => undefined);
+    throw error;
   } finally {
     await repository.close();
   }

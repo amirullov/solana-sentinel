@@ -17,6 +17,7 @@
 3. Для live режима задать `YELLOWSTONE_ENDPOINT`/`YELLOWSTONE_X_TOKEN` и запустить indexer без флагов.
 4. Yellowstone v10 использует native N-API; live процесс запускается в Linux/Dev Container. Replay/RPC/API работают на Windows.
 5. Если outage содержит больше `RPC_BACKFILL_MAX_SIGNATURES`, indexer останавливается с явной ошибкой и не продвигает cursor.
+6. Первый запуск ограничен `RPC_BACKFILL_MAX_SIGNATURES`; `initialHistoryCapped` в summary означает, что более старая история не проверена. Для обычных watched accounts RPC не восстанавливает старые bytes: требуется Yellowstone replay с достаточным retention.
 
 ## Диагностика
 
@@ -24,6 +25,22 @@
 - `/health/ready` также проверяет PostgreSQL.
 - Нельзя считать систему здоровой без метрики отставания finalized slot и движения checkpoint.
 - Повторный запуск миграций и replay должен быть идемпотентным.
+- `/v1/status` считает индексатор активным только при свежем heartbeat и checkpoint. Режим `--reconcile` завершается и не является непрерывным мониторингом.
+
+## Уведомления
+
+Задать `WEBHOOK_SIGNING_SECRET` длиной не менее 32 символов вне Git. Создать HTTPS destination в `webhook_destinations` и запустить notifier. Новые findings создают outbox jobs в той же транзакции. Получатель проверяет HMAC SHA-256 от точных байтов JSON в `x-sentinel-signature`; `x-sentinel-delivery-id` используется для дедупликации повторов. Без destination или секрета доставка не активируется.
+
+## Local validator
+
+Тестовый набор находится в `tests/anchor/`. Проверен с Anchor 0.32.3, Solana CLI 3.1.10 и platform tools v1.58. В Linux/WSL собрать программу:
+
+```bash
+anchor build --tools-version v1.58 --arch v0
+solana-test-validator --ledger "$(mktemp -d /tmp/solana-sentinel-XXXXXX)" --bpf-program Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4 target/deploy/sentinel_registry.so
+```
+
+Во втором терминале с Node/pnpm выполнить `pnpm --filter @sentinel/anchor-integration test:local`. Новый временный ledger нужен для повторного прогона, поскольку registry инициализируется один раз. Локальный результат: 6/6 сценариев прошли; он не доказывает devnet/mainnet работу.
 
 ## Publisher
 

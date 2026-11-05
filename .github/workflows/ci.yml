@@ -71,6 +71,7 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgres://sentinel:sentinel@localhost:5432/sentinel
+      DATABASE_URL_INTEGRATION: postgres://sentinel:sentinel@localhost:5432/sentinel
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -83,3 +84,4 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm db:migrate
       - run: pnpm db:migrate
+      - run: pnpm test

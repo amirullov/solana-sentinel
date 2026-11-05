@@ -1,11 +1,28 @@
 import { createHmac } from "node:crypto";
-import { isIP } from "node:net";
+import { BlockList, isIP } from "node:net";
 import { lookup } from "node:dns/promises";
 import { request } from "node:https";
 
+const blockedIpv6 = new BlockList();
+blockedIpv6.addSubnet("2001:0::", 32, "ipv6");
+blockedIpv6.addSubnet("2001:10::", 28, "ipv6");
+blockedIpv6.addSubnet("2001:20::", 28, "ipv6");
+blockedIpv6.addSubnet("2001:db8::", 32, "ipv6");
+blockedIpv6.addSubnet("2002::", 16, "ipv6");
+
+export function isPrivateAddress(address: string): boolean {
+  const version = isIP(address);
+  if (version === 4) return isPrivateIpv4(address);
+  if (version === 6) {
+    const first = Number.parseInt(address.split(":")[0] ?? "", 16);
+    return !(first >= 0x2000 && first <= 0x3fff) || blockedIpv6.check(address, "ipv6");
+  }
+  return true;
+}
+
 function isPrivateIpv4(address: string): boolean {
   const parts = address.split(".").map(Number);
-  const [a = 0, b = 0] = parts;
+  const [a = 0, b = 0, c = 0] = parts;
   return (
     a === 0 ||
     a === 10 ||
@@ -14,28 +31,14 @@ function isPrivateIpv4(address: string): boolean {
     (a === 169 && b === 254) ||
     (a === 172 && b >= 16 && b <= 31) ||
     (a === 192 && b === 168) ||
+    (a === 192 && b === 0 && c === 0) ||
+    (a === 192 && b === 0 && c === 2) ||
+    (a === 192 && b === 88 && c === 99) ||
+    (a === 198 && (b === 18 || b === 19)) ||
+    (a === 198 && b === 51 && c === 100) ||
+    (a === 203 && b === 0 && c === 113) ||
     a >= 224
   );
-}
-
-function isPrivateAddress(address: string): boolean {
-  const version = isIP(address);
-  if (version === 4) return isPrivateIpv4(address);
-  if (version === 6) {
-    const normalized = address.toLowerCase();
-    return (
-      normalized === "::1" ||
-      normalized === "::" ||
-      normalized.startsWith("fc") ||
-      normalized.startsWith("fd") ||
-      normalized.startsWith("fe8") ||
-      normalized.startsWith("fe9") ||
-      normalized.startsWith("fea") ||
-      normalized.startsWith("feb") ||
-      normalized.startsWith("::ffff:")
-    );
-  }
-  return true;
 }
 
 interface ResolvedWebhook {
@@ -61,7 +64,8 @@ export async function validateWebhookUrl(value: string): Promise<URL> {
 export async function deliverWebhook(
   urlValue: string,
   payload: unknown,
-  signingSecret?: string
+  signingSecret: string,
+  deliveryId: string
 ): Promise<void> {
   const { url, addresses } = await resolveWebhookUrl(urlValue);
   const body = JSON.stringify(payload);
@@ -74,13 +78,10 @@ export async function deliverWebhook(
         "content-type": "application/json",
         "content-length": Buffer.byteLength(body),
         "user-agent": "solana-sentinel-notifier/0.1",
-        ...(signingSecret
-          ? {
-              "x-sentinel-signature": `sha256=${createHmac("sha256", signingSecret)
-                .update(body)
-                .digest("hex")}`
-            }
-          : {})
+        "x-sentinel-delivery-id": deliveryId,
+        "x-sentinel-signature": `sha256=${createHmac("sha256", signingSecret)
+          .update(body)
+          .digest("hex")}`
       },
       // Pin the prevalidated address while keeping the original hostname for TLS/SNI.
       lookup: (_hostname, _options, callback) => callback(null, selected.address, selected.family)

@@ -223,6 +223,11 @@ export async function runLiveIngestion(
               finalizedSlot: slot,
               observedFinalizedSlot: slot
             });
+            await repository.updateServiceStatus({
+              serviceId: "indexer",
+              state: "healthy",
+              details: { cluster: options.cluster, finalizedSlot: slot }
+            });
           }
         })
         .catch(reject);

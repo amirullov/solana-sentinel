@@ -20,6 +20,7 @@ Solana Sentinel — foundation для security-инфраструктуры, к�
 - Fastify API и runtime Next.js dashboard;
 - Docker Compose, Dev Container, VS Code workspace/tasks/launch;
 - CI для TypeScript, Rust и повторного применения миграций.
+- local-validator suite для публикации, исправлений и ротации publisher (6 сценариев локально прошли).
 
 ## Быстрый старт
 
@@ -58,7 +59,7 @@ tests/      replay fixtures
 
 ## Следующий проверяемый milestone
 
-Milestone 2 — local-validator Anchor integration suite и контролируемый devnet E2E. Live/RPC код реализован и тестируется fixtures/CI, но без предоставленного Yellowstone endpoint и watched devnet program не заявляется как прошедший внешний E2E.
+Milestone 2 — контролируемый devnet E2E. Local-validator suite прошёл 6 сценариев; live/RPC код проверен локально и в CI, но без Yellowstone endpoint и watched devnet program внешний E2E не заявляется как прошедший.
 
 Подробности: [Software Design Document](docs/SDD.ru.md), [threat model](docs/threat-model.ru.md), [runbook](docs/runbook.ru.md).
 

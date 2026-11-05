@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::{
-    constants::{CORRECTION_SEED, REGISTRY_SEED},
+    constants::{CORRECTION_SEED, CURRENT_SCHEMA_VERSION, FINDING_SEED, REGISTRY_SEED},
     errors::RegistryError,
     state::{Correction, Finding, RegistryConfig},
 };
@@ -9,9 +9,15 @@ use crate::{
 #[derive(Accounts)]
 #[instruction(correction_id: [u8; 32], original_event_id: [u8; 32])]
 pub struct PublishCorrection<'info> {
-    #[account(seeds = [REGISTRY_SEED], bump = registry.bump)]
+    #[account(
+        seeds = [REGISTRY_SEED],
+        bump = registry.bump,
+        constraint = registry.schema_version == CURRENT_SCHEMA_VERSION @ RegistryError::UnsupportedSchemaVersion
+    )]
     pub registry: Account<'info, RegistryConfig>,
     #[account(
+        seeds = [FINDING_SEED, original_event_id.as_ref()],
+        bump = original_finding.bump,
         constraint = original_finding.event_id == original_event_id @ RegistryError::OriginalFindingMismatch
     )]
     pub original_finding: Account<'info, Finding>,

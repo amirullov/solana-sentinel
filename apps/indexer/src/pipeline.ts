@@ -58,7 +58,11 @@ export async function processObservation(
 ): Promise<{ readonly status: "ignored" | "inserted" | "duplicate"; readonly event?: ChainEvent }> {
   const previous = observation.beforeBase64
     ? undefined
-    : await repository.getLatestSnapshot(observation.cluster, observation.address);
+    : await repository.getLatestSnapshot(
+        observation.cluster,
+        observation.address,
+        observation.slot
+      );
   const enriched: AccountObservation = {
     ...observation,
     ...(observation.beforeBase64

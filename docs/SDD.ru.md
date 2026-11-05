@@ -134,7 +134,7 @@ Notifier забирает outbox item, проверяет destination policy, о
 
 ### 6.6 Publisher
 
-Publisher выбирает только finalized finding, повторно вычисляет evidence hash, проверяет отсутствие существующего PDA и симулирует транзакцию. В foundation он fail-closed и выключен. Ошибка RPC или mismatch блокирует публикацию.
+Publisher выбирает только finalized finding, повторно вычисляет evidence hash и проверяет отсутствие существующего PDA. В текущем коде он fail-closed и выключен по умолчанию. Перед включением необходимы local-validator и devnet E2E; независимая проверка через secondary RPC остаётся требованием. Ошибка RPC или mismatch блокирует публикацию.
 
 ### 6.7 Dashboard/verifier
 
@@ -365,6 +365,7 @@ deploy → upgrade → Yellowstone/RPC → event → finding → API → registr
 | Loader-v3 state decoder      | Реализовано, стартовый                   | Program/ProgramData tests; не полный tx decoder             |
 | Replay/idempotency           | Реализовано, fixture foundation          | synthetic fixture; historical corpus ещё нужен              |
 | PostgreSQL schema            | Реализовано                              | migration + CI double-apply                                 |
+| Atomic webhook outbox        | Реализовано                              | PostgreSQL integration test; реальный endpoint ещё нужен    |
 | API/dashboard                | Реализовано, pre-production              | findings/evidence/status API и runtime dashboard            |
 | Anchor registry              | Реализован на уровне source/unit compile | local-validator integration ещё не выполнен                 |
 | Yellowstone live correlation | Реализовано, внешний E2E не выполнен     | finalized replay/reconnect/correlation; нужен provider      |
@@ -372,6 +373,7 @@ deploy → upgrade → Yellowstone/RPC → event → finding → API → registr
 | Detection engine             | Реализовано, стартовый набор правил      | versioned loader-v3 rules и unit tests                      |
 | Webhook delivery             | Реализовано, pre-production              | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E |
 | Publisher/registry SDK       | Реализовано, выключено fail-closed       | транзакции не отправлялись; требуется deployed program      |
+| Local-validator suite        | Выполнен локально                        | 6 сценариев; SBF v0/platform tools v1.58, не devnet         |
 | Devnet deployment/E2E        | Не выполнено                             | signatures отсутствуют                                      |
 | Mainnet deployment           | Не выполнено                             | Program ID отсутствует                                      |
 | Verified build               | Не выполнено                             | verification artifact отсутствует                           |
@@ -380,7 +382,7 @@ deploy → upgrade → Yellowstone/RPC → event → finding → API → registr
 
 1. **Foundation — выполнено:** reproducible clone, local checks, schema и SDD.
 2. **Reliable loader-v3 detection — реализовано в коде:** Yellowstone correlation, RPC backfill и fixture replay; historical corpus и внешний provider E2E ещё нужны.
-3. **Registry integration — частично выполнено:** TS instruction builder/verifier и gated publisher готовы; local-validator tests ещё нужны.
+3. **Registry integration — частично выполнено:** TS instruction builder/verifier, gated publisher и local-validator suite готовы; devnet E2E ещё нужен.
 4. **Working product — частично выполнено:** findings API, evidence endpoints, dashboard и safe webhooks готовы; production monitoring и внешний delivery E2E ещё нужны.
 5. **Devnet validation — следующий milestone:** controlled upgrades и публичные test artifacts.
 6. **Mainnet readiness:** security review, release verification, key separation, manual deployment gate.
