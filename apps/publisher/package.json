@@ -13,6 +13,7 @@
     "@sentinel/config": "workspace:*",
     "@sentinel/evidence": "workspace:*",
     "@sentinel/registry-sdk": "workspace:*",
+    "@sentinel/solana-adapters": "workspace:*",
     "@solana/web3.js": "catalog:",
     "bs58": "catalog:",
     "pg": "catalog:"

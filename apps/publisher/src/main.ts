@@ -7,6 +7,7 @@ import {
   findFindingAddress,
   findRegistryAddress
 } from "@sentinel/registry-sdk";
+import { parseLoaderV3Instructions } from "@sentinel/solana-adapters";
 import {
   Connection,
   Keypair,
@@ -22,11 +23,56 @@ interface PublishableFinding {
   event_id: string;
   evidence_hash: string;
   evidence: EvidenceBundle;
+  source_hash: string;
+  program_address: string | null;
   event_type: "PROGRAM_UPGRADED" | "UPGRADE_AUTHORITY_CHANGED" | "WATCHED_ACCOUNT_CHANGED";
   cluster: "localnet" | "devnet" | "testnet" | "mainnet-beta";
   target_address: string;
   signature: string;
   slot: string;
+}
+
+async function verifySource(connection: Connection, finding: PublishableFinding): Promise<void> {
+  if (finding.event_type === "WATCHED_ACCOUNT_CHANGED" || !finding.program_address) {
+    throw new Error("Publication requires a verifiable loader-v3 instruction");
+  }
+  const transaction = await connection.getTransaction(finding.signature, {
+    commitment: "finalized",
+    maxSupportedTransactionVersion: 0
+  });
+  if (!transaction || transaction.meta?.err || transaction.slot !== Number(finding.slot)) {
+    throw new Error("Source transaction is unavailable or differs from persisted slot");
+  }
+  const loadedAddresses = transaction.meta?.loadedAddresses;
+  const accountKeys = transaction.transaction.message
+    .getAccountKeys(loadedAddresses ? { accountKeysFromLookups: loadedAddresses } : undefined)
+    .keySegments()
+    .flat()
+    .map((key) => key.toBase58());
+  const facts = parseLoaderV3Instructions(
+    {
+      signature: finding.signature,
+      slot: transaction.slot,
+      accountKeys,
+      instructions: transaction.transaction.message.compiledInstructions.map((instruction) => ({
+        programIdIndex: instruction.programIdIndex,
+        accounts: Array.from(instruction.accountKeyIndexes),
+        data: Uint8Array.from(instruction.data)
+      }))
+    },
+    new Map([[finding.target_address, finding.program_address]])
+  );
+  if (
+    !facts.some(
+      (fact) =>
+        fact.type === finding.event_type &&
+        fact.programDataAddress === finding.target_address &&
+        fact.programAddress === finding.program_address &&
+        fact.sourceHash === finding.source_hash
+    )
+  ) {
+    throw new Error("Source transaction does not reproduce the persisted loader-v3 fact");
+  }
 }
 
 async function main(): Promise<void> {
@@ -35,6 +81,9 @@ async function main(): Promise<void> {
     process.stdout.write("Publisher is disabled by default; no transaction was submitted.\n");
     return;
   }
+  if (!config.SOLANA_SECONDARY_RPC_URL) {
+    throw new Error("SOLANA_SECONDARY_RPC_URL is required for publication");
+  }
 
   const secret = JSON.parse(
     await readFile(config.PUBLISHER_KEYPAIR_PATH as string, "utf8")
@@ -42,9 +91,13 @@ async function main(): Promise<void> {
   const publisher = Keypair.fromSecretKey(Uint8Array.from(secret));
   const programId = new PublicKey(config.SENTINEL_REGISTRY_PROGRAM_ID);
   const connection = new Connection(config.SOLANA_RPC_URL, "finalized");
+  const secondary = new Connection(config.SOLANA_SECONDARY_RPC_URL, "finalized");
   const program = await connection.getAccountInfo(programId, "finalized");
   if (!program?.executable)
     throw new Error("Configured registry program is not deployed/executable");
+  if (!(await secondary.getAccountInfo(programId, "finalized"))?.executable) {
+    throw new Error("Secondary RPC does not confirm executable registry program");
+  }
   const [registry] = findRegistryAddress(programId);
   const registryAccount = await connection.getAccountInfo(registry, "finalized");
   if (!registryAccount || !registryAccount.owner.equals(programId)) {
@@ -54,15 +107,23 @@ async function main(): Promise<void> {
   if (!registryConfig.publisher.equals(publisher.publicKey)) {
     throw new Error("Configured signer is not the registry publisher");
   }
+  const secondaryRegistry = await secondary.getAccountInfo(registry, "finalized");
+  if (
+    !secondaryRegistry?.owner.equals(programId) ||
+    !decodeRegistryAccount(secondaryRegistry.data).publisher.equals(publisher.publicKey)
+  ) {
+    throw new Error("Secondary RPC does not confirm registry publisher");
+  }
 
   const pool = new Pool({ connectionString: config.DATABASE_URL });
   try {
     const result = await pool.query<PublishableFinding>(
       `SELECT f.finding_id, f.event_id, f.evidence_hash, f.evidence, e.event_type, e.cluster,
-              e.target_address, e.signature, e.slot::text
+              e.target_address, e.program_address, e.source_hash, e.signature, e.slot::text
        FROM findings f JOIN chain_events e ON e.event_id = f.event_id
        LEFT JOIN attestations a ON a.finding_id = f.finding_id
        WHERE a.finding_id IS NULL AND e.commitment = 'finalized'
+         AND e.event_type IN ('PROGRAM_UPGRADED', 'UPGRADE_AUTHORITY_CHANGED')
        ORDER BY e.slot LIMIT 1`
     );
     const finding = result.rows[0];
@@ -76,6 +137,10 @@ async function main(): Promise<void> {
     if (hashEvidence(finding.evidence) !== finding.evidence_hash) {
       throw new Error("Finding evidence hash verification failed");
     }
+    if (finding.cluster !== config.SOLANA_CLUSTER) {
+      throw new Error("Finding cluster differs from configured RPC cluster");
+    }
+    await Promise.all([verifySource(connection, finding), verifySource(secondary, finding)]);
     const [findingAddress] = findFindingAddress(finding.event_id, programId);
     if (await connection.getAccountInfo(findingAddress, "finalized")) {
       throw new Error("Finding PDA already exists but no local attestation is recorded");

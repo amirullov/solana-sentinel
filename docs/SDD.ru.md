@@ -134,7 +134,7 @@ Notifier забирает outbox item, проверяет destination policy, о
 
 ### 6.6 Publisher
 
-Publisher выбирает только finalized finding, повторно вычисляет evidence hash и проверяет отсутствие существующего PDA. В текущем коде он fail-closed и выключен по умолчанию. Перед включением необходимы local-validator и devnet E2E; независимая проверка через secondary RPC остаётся требованием. Ошибка RPC или mismatch блокирует публикацию.
+Publisher выбирает только finalized loader-v3 finding, повторно вычисляет evidence hash, сверяет исходную finalized транзакцию и registry через два RPC и проверяет отсутствие существующего PDA. В текущем коде он fail-closed и выключен по умолчанию. Перед включением в devnet необходим контролируемый E2E; ошибки RPC или mismatch блокируют публикацию. Публикация generic watched-account findings остаётся закрытой до независимой проверки их исторических данных.
 
 ### 6.7 Dashboard/verifier
 
@@ -373,6 +373,7 @@ deploy → upgrade → Yellowstone/RPC → event → finding → API → registr
 | Detection engine             | Реализовано, стартовый набор правил      | versioned loader-v3 rules и unit tests                      |
 | Webhook delivery             | Реализовано, pre-production              | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E |
 | Publisher/registry SDK       | Реализовано, выключено fail-closed       | транзакции не отправлялись; требуется deployed program      |
+| Read-only verifier CLI       | Реализован, внешний E2E не выполнен      | проверяет evidence/PDA/signatures; нет devnet attestation   |
 | Local-validator suite        | Выполнен локально                        | 6 сценариев; SBF v0/platform tools v1.58, не devnet         |
 | Devnet deployment/E2E        | Не выполнено                             | signatures отсутствуют                                      |
 | Mainnet deployment           | Не выполнено                             | Program ID отсутствует                                      |

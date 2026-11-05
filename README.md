@@ -21,6 +21,7 @@ Solana Sentinel — foundation для security-инфраструктуры, к�
 - Docker Compose, Dev Container, VS Code workspace/tasks/launch;
 - CI для TypeScript, Rust и повторного применения миграций.
 - local-validator suite для публикации, исправлений и ротации publisher (6 сценариев локально прошли).
+- отдельный read-only verifier CLI для сравнения API evidence с Finding PDA и finalized signatures.
 
 ## Быстрый старт
 
@@ -49,7 +50,7 @@ Live mode дополнительно требует `YELLOWSTONE_ENDPOINT` и, �
 ## Структура
 
 ```text
-apps/       indexer, API, publisher gate, notifier, web
+apps/       indexer, API, publisher gate, notifier, verifier, web
 packages/   core, evidence, config, database, Solana adapters, registry SDK
 programs/   Anchor program sentinel_registry
 infra/      PostgreSQL migrations and Docker

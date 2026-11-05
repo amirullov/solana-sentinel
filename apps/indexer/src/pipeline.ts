@@ -19,6 +19,7 @@ export interface AccountObservation {
   readonly observedAt: string;
   readonly loader: "loader-v3" | "watched-account";
   readonly eventTypeHint?: ChainEvent["type"];
+  readonly sourceHashHint?: string;
   readonly beforeBase64?: string;
   readonly afterBase64: string;
 }
@@ -102,12 +103,14 @@ export async function processObservation(
     slot: enriched.slot,
     commitment: enriched.commitment,
     observedAt: enriched.observedAt,
-    sourceHash: sha256(
-      Buffer.from(
-        `${enriched.cluster}\0${enriched.signature}\0${enriched.slot}\0${enriched.address}\0${afterHash}`,
-        "utf8"
-      )
-    ),
+    sourceHash:
+      enriched.sourceHashHint ??
+      sha256(
+        Buffer.from(
+          `${enriched.cluster}\0${enriched.signature}\0${enriched.slot}\0${enriched.address}\0${afterHash}`,
+          "utf8"
+        )
+      ),
     beforeHash: enriched.beforeBase64
       ? sha256(Buffer.from(enriched.beforeBase64, "base64"))
       : undefined,

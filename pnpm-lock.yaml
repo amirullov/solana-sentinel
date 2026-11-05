@@ -151,6 +151,9 @@ importers:
       "@sentinel/registry-sdk":
         specifier: workspace:*
         version: link:../../packages/registry-sdk
+      "@sentinel/solana-adapters":
+        specifier: workspace:*
+        version: link:../../packages/solana-adapters
       "@solana/web3.js":
         specifier: "catalog:"
         version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
@@ -170,6 +173,15 @@ importers:
       typescript:
         specifier: "catalog:"
         version: 5.9.3
+
+  apps/verifier:
+    dependencies:
+      "@solana/web3.js":
+        specifier: "catalog:"
+        version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      bs58:
+        specifier: "catalog:"
+        version: 6.0.0
 
   apps/web:
     dependencies:

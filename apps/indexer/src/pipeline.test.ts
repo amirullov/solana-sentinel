@@ -30,4 +30,17 @@ describe("indexer pipeline", () => {
     );
     expect(result.status).toBe("ignored");
   });
+
+  it("preserves the correlated loader instruction hash", async () => {
+    const repository = new InMemoryEventRepository();
+    const result = await processObservation(
+      {
+        ...observation,
+        eventTypeHint: "PROGRAM_UPGRADED",
+        sourceHashHint: "a".repeat(64)
+      },
+      repository
+    );
+    expect(result.event?.sourceHash).toBe("a".repeat(64));
+  });
 });

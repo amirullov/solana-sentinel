@@ -133,7 +133,7 @@ class LiveCorrelator {
           commitment: "finalized",
           observedAt: account.observedAt,
           loader: target.loader,
-          ...(fact ? { eventTypeHint: fact.type } : {}),
+          ...(fact ? { eventTypeHint: fact.type, sourceHashHint: fact.sourceHash } : {}),
           afterBase64: Buffer.from(info.data).toString("base64")
         },
         this.repository

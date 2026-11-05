@@ -42,9 +42,19 @@ solana-test-validator --ledger "$(mktemp -d /tmp/solana-sentinel-XXXXXX)" --bpf-
 
 Во втором терминале с Node/pnpm выполнить `pnpm --filter @sentinel/anchor-integration test:local`. Новый временный ledger нужен для повторного прогона, поскольку registry инициализируется один раз. Локальный результат: 6/6 сценариев прошли; он не доказывает devnet/mainnet работу.
 
+## Проверка опубликованного finding
+
+После реальной публикации вызвать read-only verifier:
+
+```bash
+pnpm --filter @sentinel/verifier start -- http://127.0.0.1:4100 FINDING_UUID https://api.devnet.solana.com REGISTRY_PROGRAM_ID
+```
+
+Он независимо пересчитывает canonical evidence hash, сверяет поля Finding PDA, owner программы и finalized статусы исходной и публикационной транзакций. Вывод `verified: true` возможен только при прохождении всех проверок. До devnet deployment такой результат отсутствует.
+
 ## Publisher
 
-Publisher выключен по умолчанию. Для включения одновременно требуются keypair path и `PUBLISHER_CONFIRM_PROGRAM_DEPLOYED=true`; перед отправкой проверяются executable program и RegistryConfig PDA. Снимать gate следует только после локальных Anchor integration tests, devnet E2E, проверки key separation и явного review.
+Publisher выключен по умолчанию. Для включения одновременно требуются keypair path, `PUBLISHER_CONFIRM_PROGRAM_DEPLOYED=true` и независимый `SOLANA_SECONDARY_RPC_URL`; перед отправкой проверяются executable program, RegistryConfig PDA и loader-v3 source transaction на обоих RPC. Снимать gate следует только после devnet E2E, проверки key separation и явного review. Generic watched-account findings пока не публикуются.
 
 ## Инцидент с ключом
 

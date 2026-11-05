@@ -1,0 +1,14 @@
+{
+  "name": "@sentinel/verifier",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node verify.mjs",
+    "test": "node --test verify.test.mjs"
+  },
+  "dependencies": {
+    "@solana/web3.js": "catalog:",
+    "bs58": "catalog:"
+  }
+}
