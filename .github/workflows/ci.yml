@@ -22,7 +22,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: "1"
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: 11.25.0
       - uses: actions/setup-node@v4
@@ -74,7 +74,7 @@ jobs:
       DATABASE_URL_INTEGRATION: postgres://sentinel:sentinel@localhost:5432/sentinel
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
         with:
           version: 11.25.0
       - uses: actions/setup-node@v4
