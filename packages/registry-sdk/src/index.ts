@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { hashEvidence, type EvidenceBundle } from "@sentinel/evidence";
 import { PublicKey, SystemProgram, TransactionInstruction } from "@solana/web3.js";
 
-export const REGISTRY_PROGRAM_ID = new PublicKey("Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4");
+export const REGISTRY_PROGRAM_ID = new PublicKey("BZ3PWjMS6g4bkPjr66h5Vb4e2qHyj3To2EDzTT9j5yY6");
 
 export function eventIdToBytes(eventId: string): Buffer {
   if (!/^[a-f0-9]{64}$/.test(eventId)) throw new Error("eventId must be 32-byte lowercase hex");
@@ -65,6 +65,29 @@ const KIND_VALUES = {
 
 function anchorDiscriminator(namespace: "account" | "global", name: string): Buffer {
   return createHash("sha256").update(`${namespace}:${name}`).digest().subarray(0, 8);
+}
+
+export function buildInitializeRegistryInstruction(
+  admin: PublicKey,
+  publisher: PublicKey,
+  programId: PublicKey = REGISTRY_PROGRAM_ID
+): TransactionInstruction {
+  if (admin.equals(publisher) || publisher.equals(PublicKey.default)) {
+    throw new Error("Registry admin and publisher must be distinct non-default keys");
+  }
+  const [registry] = findRegistryAddress(programId);
+  return new TransactionInstruction({
+    programId,
+    keys: [
+      { pubkey: registry, isSigner: false, isWritable: true },
+      { pubkey: admin, isSigner: true, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+    ],
+    data: Buffer.concat([
+      anchorDiscriminator("global", "initialize_registry"),
+      publisher.toBuffer()
+    ])
+  });
 }
 
 function hex32(value: string, label: string): Buffer {

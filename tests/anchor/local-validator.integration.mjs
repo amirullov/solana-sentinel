@@ -12,6 +12,7 @@ import {
   TransactionInstruction
 } from "@solana/web3.js";
 import {
+  buildInitializeRegistryInstruction,
   buildPublishFindingInstruction,
   decodeFindingAccount,
   decodeRegistryAccount,
@@ -162,12 +163,18 @@ test(
     await t.test("rejects equal authorities, then initializes once", async () => {
       await expectRejected(initializeInstruction(admin.publicKey, admin.publicKey), admin);
       assert.equal(await connection.getAccountInfo(registryAddress, "confirmed"), null);
-      await send(initializeInstruction(admin.publicKey, publisher.publicKey), admin);
+      await send(
+        buildInitializeRegistryInstruction(admin.publicKey, publisher.publicKey, programId),
+        admin
+      );
       const config = decodeRegistryAccount((await account(registryAddress)).data);
       assert.equal(config.schemaVersion, 1);
       assert.ok(config.admin.equals(admin.publicKey));
       assert.ok(config.publisher.equals(publisher.publicKey));
-      await expectRejected(initializeInstruction(admin.publicKey, publisher.publicKey), admin);
+      await expectRejected(
+        buildInitializeRegistryInstruction(admin.publicKey, publisher.publicKey, programId),
+        admin
+      );
     });
 
     const firstEventId = bytes32(0x11);

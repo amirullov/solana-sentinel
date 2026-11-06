@@ -3,8 +3,8 @@
 | Поле                        | Значение                                      |
 | --------------------------- | --------------------------------------------- |
 | Версия                      | 0.1.0 Foundation                              |
-| Дата                        | 4 ноября 2026                                 |
-| Статус                      | Functional pre-devnet implementation          |
+| Дата                        | 6 ноября 2026                                 |
+| Статус                      | Devnet pilot, authority-change E2E verified   |
 | Авторы                      | Solana Sentinel contributors                  |
 | Язык нормативных требований | Русский; ключевые идентификаторы — английские |
 
@@ -136,7 +136,7 @@ Notifier забирает outbox item, проверяет destination policy, о
 
 ### 6.6 Publisher
 
-Publisher выбирает только finalized loader-v3 finding, повторно вычисляет evidence hash, сверяет исходную finalized транзакцию и registry через два RPC и проверяет отсутствие существующего PDA. В текущем коде он fail-closed и выключен по умолчанию. Перед включением в devnet необходим контролируемый E2E; ошибки RPC или mismatch блокируют публикацию. Публикация generic watched-account findings остаётся закрытой до независимой проверки их исторических данных.
+Publisher выбирает только finalized loader-v3 finding, повторно вычисляет evidence hash, сверяет исходную finalized транзакцию и registry через два RPC и проверяет отсутствие существующего PDA. В текущем коде он fail-closed и выключен по умолчанию. Контролируемый devnet E2E для смены upgrade authority выполнен на двух findings; ошибки RPC или mismatch блокируют публикацию. Публикация generic watched-account findings остаётся закрытой до независимой проверки их исторических данных.
 
 ### 6.7 Dashboard/verifier
 
@@ -236,7 +236,7 @@ Upgradeable Loader State использует discriminant и варианты `
 4. Correction не удаляет и не переписывает оригинал.
 5. Программа не принимает token accounts, не делает CPI в DeFi и не хранит депозиты.
 6. Размер accounts ограничен фиксированными полями.
-7. Program ID в source до deployment является placeholder, а не mainnet адресом.
+7. Program ID в source закреплён за devnet keypair; для mainnet нужен отдельный ID и key ceremony.
 
 ## 11. Согласованность и отказоустойчивость
 
@@ -323,19 +323,19 @@ Alert возникает не только при падении процесс�
 
 ### Devnet E2E
 
-Контролируемая upgradeable test program проходит цепочку:
+Контролируемая смена upgrade authority проходит цепочку:
 
 ```text
-deploy → upgrade → Yellowstone/RPC → event → finding → API → registry → verifier
+deploy → authority rotation → RPC polling → event → finding → API → registry → verifier
 ```
 
-Артефакт теста включает реальные devnet signatures и commit SHA. Он не выдаётся за mainnet proof.
+Артефакт теста включает реальные devnet signatures и результаты verifier в `docs/devnet-validation.ru.md`. Он не выдаётся за mainnet proof или verified build.
 
 ## 15. CI/CD и release gates
 
-Текущий CI выполняет format, lint, TypeScript typecheck/tests/build, Rust fmt/clippy/tests и двукратную миграцию на чистом PostgreSQL.
+CI настроен для format, lint, TypeScript typecheck/tests/build, Rust fmt/clippy/tests и двукратной миграции на чистом PostgreSQL. Последние GitHub Actions jobs не стартовали из-за блокировки billing аккаунта; локальные проверки выполнены отдельно.
 
-Переход к devnet требует:
+Для воспроизводимого devnet release требуются:
 
 - установленных pinned Solana/Anchor CLI;
 - local validator integration suite;
@@ -358,43 +358,43 @@ deploy → upgrade → Yellowstone/RPC → event → finding → API → registr
 
 Эти значения не должны появляться как достигнутые без отчёта с периодом, выборкой и окружением.
 
-## 17. Фактический статус на 4 ноября 2026
+## 17. Фактический статус на 6 ноября 2026
 
-| Область                      | Статус                                   | Доказательство/ограничение                                  |
-| ---------------------------- | ---------------------------------------- | ----------------------------------------------------------- |
-| Monorepo и toolchain pins    | Реализовано                              | workspace manifests, lockfiles после install                |
-| Event ID/evidence hashing    | Реализовано                              | TypeScript unit tests                                       |
-| Loader-v3 state decoder      | Реализовано, стартовый                   | Program/ProgramData tests; не полный tx decoder             |
-| Replay/idempotency           | Реализовано, fixture foundation          | synthetic fixture; historical corpus ещё нужен              |
-| PostgreSQL schema            | Реализовано                              | migration + CI double-apply                                 |
-| Atomic webhook outbox        | Реализовано                              | PostgreSQL integration test; реальный endpoint ещё нужен    |
-| API/dashboard                | Реализовано, pre-production              | findings/evidence/status API и runtime dashboard            |
-| Anchor registry              | Реализован и проверен на local-validator | 6 local-validator сценариев; devnet deployment отсутствует  |
-| Yellowstone live correlation | Реализовано, внешний E2E не выполнен     | finalized replay/reconnect/correlation; нужен provider      |
-| RPC reconciliation/polling   | Реализовано, внешний E2E не выполнен     | durable cursor/backfill/gap gate; devnet read-only smoke    |
-| Detection engine             | Реализовано, стартовый набор правил      | versioned loader-v3 rules и unit tests                      |
-| Webhook delivery             | Реализовано, pre-production              | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E |
-| Publisher/registry SDK       | Реализовано, выключено fail-closed       | транзакции не отправлялись; требуется deployed program      |
-| Read-only verifier CLI       | Реализован, внешний E2E не выполнен      | проверяет evidence/PDA/signatures; нет devnet attestation   |
-| Local-validator suite        | Выполнен локально                        | 6 сценариев; SBF v0/platform tools v1.58, не devnet         |
-| Devnet deployment/E2E        | Не выполнено                             | signatures отсутствуют                                      |
-| Mainnet deployment           | Не выполнено                             | Program ID отсутствует                                      |
-| Verified build               | Не выполнено                             | verification artifact отсутствует                           |
+| Область                      | Статус                                 | Доказательство/ограничение                                  |
+| ---------------------------- | -------------------------------------- | ----------------------------------------------------------- |
+| Monorepo и toolchain pins    | Реализовано                            | workspace manifests, lockfiles после install                |
+| Event ID/evidence hashing    | Реализовано                            | TypeScript unit tests                                       |
+| Loader-v3 decoder            | Реализовано, стартовый                 | Program/ProgramData и instruction tests; corpus ещё нужен   |
+| Replay/idempotency           | Реализовано, fixture foundation        | synthetic fixture; historical corpus ещё нужен              |
+| PostgreSQL schema            | Реализовано                            | миграции повторно применены к локальной БД                  |
+| Atomic webhook outbox        | Реализовано                            | PostgreSQL integration test; реальный endpoint ещё нужен    |
+| API/dashboard                | Реализовано, pre-production            | findings/evidence/status API и runtime dashboard            |
+| Anchor registry              | Проверен локально и развёрнут в devnet | Program ID, RegistryConfig PDA и две Finding PDA            |
+| Yellowstone live correlation | Реализовано, внешний E2E не выполнен   | finalized replay/reconnect/correlation; нужен provider      |
+| RPC reconciliation/polling   | Devnet authority-change E2E выполнен   | два finalized events, checkpoint и heartbeat                |
+| Detection engine             | Реализовано, стартовый набор правил    | versioned loader-v3 rules и unit tests                      |
+| Webhook delivery             | Реализовано, pre-production            | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E |
+| Publisher/registry SDK       | Два devnet attestations; default off   | два независимых RPC; generic account gate сохранён          |
+| Read-only verifier CLI       | Devnet E2E пройден для двух findings   | evidence/PDA/source/attestation checks дали true            |
+| Local-validator suite        | Выполнен локально                      | 6 сценариев; SBF v0/platform tools v1.58, не devnet         |
+| Devnet deployment/E2E        | Выполнено для authority rotation       | реальные signatures в devnet validation report              |
+| Mainnet deployment           | Не выполнено                           | отдельный mainnet Program ID не создан                      |
+| Verified build               | Не выполнено                           | verification artifact отсутствует                           |
 
 ## 18. Roadmap
 
 1. **Foundation — выполнено:** reproducible clone, local checks, schema и SDD.
-2. **Reliable loader-v3 detection — реализовано в коде:** Yellowstone correlation, RPC backfill и fixture replay; historical corpus и внешний provider E2E ещё нужны.
-3. **Registry integration — частично выполнено:** TS instruction builder/verifier, gated publisher и local-validator suite готовы; devnet E2E ещё нужен.
+2. **Reliable loader-v3 detection — devnet E2E для authority change выполнен:** RPC polling создал две находки; Yellowstone correlation, historical corpus и provider E2E ещё нужны.
+3. **Registry integration — devnet E2E для двух findings выполнен:** Program ID, RegistryConfig, attestations и независимый verifier проверены; mainnet gate закрыт.
 4. **Working product — частично выполнено:** findings API, evidence endpoints, dashboard и safe webhooks готовы; production monitoring и внешний delivery E2E ещё нужны.
-5. **Devnet validation — следующий milestone:** controlled upgrades и публичные test artifacts.
+5. **Devnet validation — частично выполнено:** authority rotation и публичные test artifacts готовы; upgrade, outage replay и Yellowstone E2E остаются.
 6. **Mainnet readiness:** security review, release verification, key separation, manual deployment gate.
 7. **Hardening:** loader-v4 adapter, provider failover, fault injection и измеренные SLO.
 
 ## 19. Открытые вопросы
 
 - Какой Yellowstone provider и retention гарантии доступны проекту?
-- Какие два независимых RPC provider используются для critical verification?
+- Какие два независимых RPC provider будут использоваться для production verification? В devnet использованы публичные Solana и OnFinality.
 - Где хранится publisher key: managed signer, HSM или ограниченный hot wallet?
 - Какой формат/стандарт canonical JSON фиксируется для внешних verifier implementations?
 - Когда loader-v4 получает достаточный fixture corpus для production support?

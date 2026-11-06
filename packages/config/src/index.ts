@@ -46,7 +46,7 @@ export const RuntimeConfigSchema = z.object({
     (value) => (value === "" ? undefined : value),
     z.string().optional()
   ),
-  SENTINEL_REGISTRY_PROGRAM_ID: z.string().default("Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4")
+  SENTINEL_REGISTRY_PROGRAM_ID: z.string().default("BZ3PWjMS6g4bkPjr66h5Vb4e2qHyj3To2EDzTT9j5yY6")
 });
 
 export type RuntimeConfig = z.infer<typeof RuntimeConfigSchema>;

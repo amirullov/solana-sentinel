@@ -1,6 +1,11 @@
 import { readdir, readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { loadEnvFile } from "node:process";
 import pg from "pg";
+
+const envFile = resolve(".env");
+if (existsSync(envFile)) loadEnvFile(envFile);
 
 const databaseUrl =
   process.env.DATABASE_URL ?? "postgres://sentinel:sentinel@localhost:5432/sentinel";

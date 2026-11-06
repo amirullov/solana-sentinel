@@ -7,7 +7,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-sentinel_registry = "Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4"
+sentinel_registry = "BZ3PWjMS6g4bkPjr66h5Vb4e2qHyj3To2EDzTT9j5yY6"
+
+[programs.devnet]
+sentinel_registry = "BZ3PWjMS6g4bkPjr66h5Vb4e2qHyj3To2EDzTT9j5yY6"
 
 [provider]
 cluster = "Localnet"

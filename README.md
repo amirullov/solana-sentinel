@@ -2,9 +2,9 @@
 
 [![CI](https://github.com/amirullov/solana-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/amirullov/solana-sentinel/actions/workflows/ci.yml)
 
-Solana Sentinel — foundation для security-инфраструктуры, которая фиксирует критические изменения Solana-программ и аккаунтов, формирует воспроизводимые evidence hashes и в будущем публикует выбранные finalized findings в собственный on-chain registry.
+Solana Sentinel — основа системы наблюдения за критическими изменениями Solana-программ и аккаунтов. Она формирует воспроизводимые evidence hashes и публикует подтверждённые findings в собственный on-chain registry. Публикация пока проверена только в devnet для смены upgrade authority.
 
-> Текущий честный статус: функциональная pre-devnet реализация, проверенная локальными тестами и CI. Внешний Yellowstone/RPC E2E, devnet/mainnet deployment, production-monitoring и verified build **не выполнялись**. Program ID в конфигурации — development placeholder.
+> Текущий статус: registry развёрнут в devnet, а две реальные смены upgrade authority прошли цепочку RPC polling → finding → on-chain attestation → независимый verifier. Yellowstone live E2E, mainnet deployment, production monitoring и verified build **не выполнялись**. Последний GitHub Actions CI заблокирован состоянием billing аккаунта; локальные проверки прошли.
 
 ## Что уже есть
 
@@ -49,7 +49,7 @@ pnpm --filter @sentinel/indexer start -- --reconcile
 pnpm --filter @sentinel/indexer start -- --poll-rpc
 ```
 
-Режим опрашивает finalized историю каждые 30 секунд и сохраняет checkpoint. Он ограничен лимитами публичного RPC и не восстанавливает исторические bytes обычных watched accounts; `WATCHED_ACCOUNT_IDS` в этом режиме запрещён. Непрерывный devnet E2E будет заявлен только после проверки на реальных транзакциях.
+Режим опрашивает finalized историю каждые 30 секунд и сохраняет checkpoint. Он ограничен лимитами публичного RPC и не восстанавливает исторические bytes обычных watched accounts; `WATCHED_ACCOUNT_IDS` в этом режиме запрещён. На двух devnet транзакциях проверена цепочка наблюдения и публикации для смены upgrade authority.
 
 Live mode дополнительно требует `YELLOWSTONE_ENDPOINT` и, если нужен провайдеру, `YELLOWSTONE_X_TOKEN`. Нативный Yellowstone client запускайте в Linux/Dev Container; текущий пакет не поставляет Windows N-API binary.
 
@@ -66,9 +66,9 @@ docs/       SDD, threat model, runbook, ADR
 tests/      replay fixtures
 ```
 
-## Следующий проверяемый milestone
+## Текущий этап и следующий шаг
 
-Milestone 2 — контролируемый devnet E2E. Local-validator suite прошёл 6 сценариев; live/RPC код проверен локально и в CI, но без Yellowstone endpoint и watched devnet program внешний E2E не заявляется как прошедший.
+Milestone 2 — контролируемый devnet E2E для смены upgrade authority выполнен через бесплатные RPC. Local-validator suite прошёл 6 сценариев. Yellowstone stream и исторические watched-account bytes требуют отдельной проверки. Реальные адреса, подписи и ограничения: [отчёт devnet](docs/devnet-validation.ru.md).
 
 Подробности: [Software Design Document](docs/SDD.ru.md), [threat model](docs/threat-model.ru.md), [runbook](docs/runbook.ru.md).
 

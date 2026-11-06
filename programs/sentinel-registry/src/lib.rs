@@ -8,8 +8,7 @@ pub mod state;
 use instructions::*;
 use state::{Cluster, FindingKind};
 
-// Development-only placeholder. A real Program ID is assigned only at an explicit deployment stage.
-declare_id!("Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4");
+declare_id!("BZ3PWjMS6g4bkPjr66h5Vb4e2qHyj3To2EDzTT9j5yY6");
 
 #[program]
 pub mod sentinel_registry {

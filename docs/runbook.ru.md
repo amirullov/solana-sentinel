@@ -8,7 +8,7 @@
 4. Запустить PostgreSQL: `pnpm db:up`.
 5. Применить миграции: `pnpm db:migrate`.
 6. Выполнить replay: `pnpm build`, затем `pnpm --filter @sentinel/indexer start -- --replay tests/fixtures/account-updates.json`.
-7. Запустить API и web отдельными задачами VS Code.
+7. Запустить API и web отдельными задачами VS Code; открыть панель по адресу `http://localhost:3000`. API доступен на `http://localhost:4100`. При выключении локальных процессов мониторинг и панель остановятся.
 
 ## RPC recovery и live ingestion
 
@@ -22,11 +22,13 @@
 
 ## Локальные devnet-ключи
 
-В WSL Ubuntu запустить `bash scripts/create-devnet-keys.sh` из корня проекта. Скрипт создаёт отдельные `deployer`, `admin` и `publisher` JSON keypairs в `~/.config/solana-sentinel/devnet` с правами `700` на папку и `600` на файлы. Повторный запуск не заменяет существующие ключи. В консоль выводятся только публичные адреса. Секретные JSON-файлы не копировать в репозиторий и не отправлять в чат. Для devnet deployment потребуется отдельный program keypair и соответствующая замена development placeholder ID в коде перед сборкой.
+В WSL Ubuntu запустить `bash scripts/create-devnet-keys.sh` из корня проекта. Скрипт создаёт отдельные `deployer`, `admin` и `publisher` JSON keypairs в `~/.config/solana-sentinel/devnet` с правами `700` на папку и `600` на файлы. Повторный запуск не заменяет существующие ключи. В консоль выводятся только публичные адреса. Секретные JSON-файлы не копировать в репозиторий и не отправлять в чат. Для Program ID используется отдельный keypair; текущий devnet ID указан в `Anchor.toml`.
 
-## Yellowstone gRPC для devnet
+## Yellowstone gRPC для devnet (необязательный следующий этап)
 
-1. Выбрать провайдера с **devnet Yellowstone-compatible gRPC**, доступом к account и transaction updates на `finalized`, а также replay по `fromSlot`. До оплаты проверить срок хранения replay и лимиты подписки.
+Текущий devnet pilot работает через бесплатный RPC polling и не требует покупки Yellowstone-доступа. Следующие шаги нужны только для отдельной проверки полного live stream и replay.
+
+1. Выбрать провайдера с **devnet Yellowstone-compatible gRPC**, доступом к account и transaction updates на `finalized`, а также replay по `fromSlot`. До использования проверить бесплатный тариф, срок хранения replay и лимиты подписки.
 2. В личном кабинете создать проект/endpoint именно для **Solana Devnet**, получить gRPC URL и access token. Обычный HTTPS JSON-RPC URL не является gRPC URL.
 3. Локально заполнить игнорируемый Git файл `.env`: `YELLOWSTONE_ENDPOINT`, `YELLOWSTONE_X_TOKEN`, `SOLANA_RPC_URL`, `SOLANA_SECONDARY_RPC_URL` и `WATCHED_PROGRAM_IDS`. В качестве двух RPC использовать независимых операторов. Оставить `PUBLISHER_ENABLED=false` до успешного devnet E2E.
 4. Запустить live indexer в WSL/Dev Container, проверить heartbeat и движение checkpoint в `/v1/status`. Если replay не достигает сохранённого checkpoint, остановить запуск и расследовать gap.
@@ -51,7 +53,7 @@
 
 ```bash
 anchor build --tools-version v1.58 --arch v0
-solana-test-validator --ledger "$(mktemp -d /tmp/solana-sentinel-XXXXXX)" --bpf-program Fg6PaFpoGXkYsidMpWxTWqLNZfjpQm5cS2fnQ71kKb4 target/deploy/sentinel_registry.so
+solana-test-validator --ledger "$(mktemp -d /tmp/solana-sentinel-XXXXXX)" --bpf-program BZ3PWjMS6g4bkPjr66h5Vb4e2qHyj3To2EDzTT9j5yY6 target/deploy/sentinel_registry.so
 ```
 
 Во втором терминале с Node/pnpm выполнить `pnpm --filter @sentinel/anchor-integration test:local`. Новый временный ledger нужен для повторного прогона, поскольку registry инициализируется один раз. Локальный результат: 6/6 сценариев прошли; он не доказывает devnet/mainnet работу.
@@ -64,11 +66,11 @@ solana-test-validator --ledger "$(mktemp -d /tmp/solana-sentinel-XXXXXX)" --bpf-
 pnpm --filter @sentinel/verifier start -- http://127.0.0.1:4100 FINDING_UUID https://api.devnet.solana.com REGISTRY_PROGRAM_ID
 ```
 
-Он независимо пересчитывает canonical evidence hash, сверяет поля Finding PDA, owner программы и finalized статусы исходной и публикационной транзакций. Вывод `verified: true` возможен только при прохождении всех проверок. До devnet deployment такой результат отсутствует.
+Он независимо пересчитывает canonical evidence hash, сверяет поля Finding PDA, owner программы и finalized статусы исходной и публикационной транзакций. Две реальные devnet-находки прошли проверку с `verified: true`; это проверка записи и evidence, а не verified build бинарника.
 
 ## Publisher
 
-Publisher выключен по умолчанию. Для включения одновременно требуются keypair path, `PUBLISHER_CONFIRM_PROGRAM_DEPLOYED=true` и независимый `SOLANA_SECONDARY_RPC_URL`; перед отправкой проверяются executable program, RegistryConfig PDA и loader-v3 source transaction на обоих RPC. Снимать gate следует только после devnet E2E, проверки key separation и явного review. Generic watched-account findings пока не публикуются.
+Publisher выключен по умолчанию. Для включения одновременно требуются keypair path, `PUBLISHER_CONFIRM_PROGRAM_DEPLOYED=true` и независимый `SOLANA_SECONDARY_RPC_URL`; перед отправкой проверяются executable program, RegistryConfig PDA и loader-v3 source transaction на обоих RPC. Для devnet E2E он был включён временно и снова выключен. Generic watched-account findings пока не публикуются.
 
 ## Инцидент с ключом
 

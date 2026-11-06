@@ -56,7 +56,7 @@ export default async function HomePage() {
       <nav>
         <span className="mark">S</span>
         <span>Solana Sentinel</span>
-        <span className="status">Pre-devnet · mainnet not deployed</span>
+        <span className="status">Devnet pilot · mainnet not deployed</span>
       </nav>
       <section className="hero">
         <p className="eyebrow">ON-CHAIN SECURITY INTELLIGENCE</p>
