@@ -19,6 +19,19 @@
 5. Если outage содержит больше `RPC_BACKFILL_MAX_SIGNATURES`, indexer останавливается с явной ошибкой и не продвигает cursor.
 6. Первый запуск ограничен `RPC_BACKFILL_MAX_SIGNATURES`; `initialHistoryCapped` в summary означает, что более старая история не проверена. Для обычных watched accounts RPC не восстанавливает старые bytes: требуется Yellowstone replay с достаточным retention.
 
+## Локальные devnet-ключи
+
+В WSL Ubuntu запустить `bash scripts/create-devnet-keys.sh` из корня проекта. Скрипт создаёт отдельные `deployer`, `admin` и `publisher` JSON keypairs в `~/.config/solana-sentinel/devnet` с правами `700` на папку и `600` на файлы. Повторный запуск не заменяет существующие ключи. В консоль выводятся только публичные адреса. Секретные JSON-файлы не копировать в репозиторий и не отправлять в чат. Для devnet deployment потребуется отдельный program keypair и соответствующая замена development placeholder ID в коде перед сборкой.
+
+## Yellowstone gRPC для devnet
+
+1. Выбрать провайдера с **devnet Yellowstone-compatible gRPC**, доступом к account и transaction updates на `finalized`, а также replay по `fromSlot`. До оплаты проверить срок хранения replay и лимиты подписки.
+2. В личном кабинете создать проект/endpoint именно для **Solana Devnet**, получить gRPC URL и access token. Обычный HTTPS JSON-RPC URL не является gRPC URL.
+3. Локально заполнить игнорируемый Git файл `.env`: `YELLOWSTONE_ENDPOINT`, `YELLOWSTONE_X_TOKEN`, `SOLANA_RPC_URL`, `SOLANA_SECONDARY_RPC_URL` и `WATCHED_PROGRAM_IDS`. В качестве двух RPC использовать независимых операторов. Оставить `PUBLISHER_ENABLED=false` до успешного devnet E2E.
+4. Запустить live indexer в WSL/Dev Container, проверить heartbeat и движение checkpoint в `/v1/status`. Если replay не достигает сохранённого checkpoint, остановить запуск и расследовать gap.
+
+Наличие endpoint и токена само по себе не подтверждает работающий поток: требуется фактическая подписка и проверка событий. Публичный `https://api.devnet.solana.com` можно использовать для ограниченного RPC теста, но он не предоставляет Yellowstone gRPC.
+
 ## Диагностика
 
 - `/health/live` подтверждает только работоспособность процесса.
