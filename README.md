@@ -43,6 +43,14 @@ pnpm --filter @sentinel/indexer start -- --replay tests/fixtures/account-updates
 pnpm --filter @sentinel/indexer start -- --reconcile
 ```
 
+Без Yellowstone можно запустить непрерывное наблюдение за loader-v3 программами через бесплатный devnet RPC:
+
+```bash
+pnpm --filter @sentinel/indexer start -- --poll-rpc
+```
+
+Режим опрашивает finalized историю каждые 30 секунд и сохраняет checkpoint. Он ограничен лимитами публичного RPC и не восстанавливает исторические bytes обычных watched accounts; `WATCHED_ACCOUNT_IDS` в этом режиме запрещён. Непрерывный devnet E2E будет заявлен только после проверки на реальных транзакциях.
+
 Live mode дополнительно требует `YELLOWSTONE_ENDPOINT` и, если нужен провайдеру, `YELLOWSTONE_X_TOKEN`. Нативный Yellowstone client запускайте в Linux/Dev Container; текущий пакет не поставляет Windows N-API binary.
 
 Для VS Code откройте `solana-sentinel.code-workspace`.

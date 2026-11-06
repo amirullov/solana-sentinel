@@ -9,6 +9,19 @@ const options = { cluster: "devnet" as const, maxSignatures: 10 };
 const sourceId = `rpc:devnet:${programDataAddress}`;
 
 describe("RPC reconciliation safety", () => {
+  it("does not report coverage without an initial signature cursor", async () => {
+    const repository = new InMemoryEventRepository();
+    const connection = {
+      getSlot: () => Promise.resolve(200),
+      getSignaturesForAddress: () => Promise.resolve([])
+    } as unknown as Connection;
+
+    await expect(reconcileLoaderV3(connection, targets, repository, options)).rejects.toThrow(
+      "cannot establish an initial signature cursor"
+    );
+    expect(await repository.getCheckpoint(sourceId)).toBeUndefined();
+  });
+
   it("does not move the checkpoint when its saved cursor is missing", async () => {
     const repository = new InMemoryEventRepository();
     await repository.advanceCheckpoint({

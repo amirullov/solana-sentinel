@@ -6,6 +6,7 @@ import { seedInitialSnapshots } from "./bootstrap.js";
 import { discoverWatchTargets } from "./discovery.js";
 import { reconcileLoaderV3 } from "./reconciliation.js";
 import { replayFile } from "./replay.js";
+import { runRpcPolling } from "./rpc-polling.js";
 
 async function main(): Promise<void> {
   const replayIndex = process.argv.indexOf("--replay");
@@ -20,6 +21,14 @@ async function main(): Promise<void> {
   }
 
   const config = loadConfig();
+  const pollRpc = process.argv.includes("--poll-rpc");
+  const reconcileOnly = process.argv.includes("--reconcile");
+  if (pollRpc && reconcileOnly) {
+    throw new Error("Choose either --poll-rpc or --reconcile");
+  }
+  if (pollRpc && config.WATCHED_ACCOUNT_IDS.length > 0) {
+    throw new Error("RPC polling cannot reconstruct historical watched-account bytes");
+  }
   const repository = new PostgresEventRepository({ connectionString: config.DATABASE_URL });
   try {
     await repository.updateServiceStatus({ serviceId: "indexer", state: "starting" });
@@ -32,6 +41,26 @@ async function main(): Promise<void> {
     if (discovery.targets.size === 0) {
       throw new Error("Configure at least one WATCHED_PROGRAM_IDS or WATCHED_ACCOUNT_IDS value");
     }
+    if (pollRpc) {
+      const controller = new AbortController();
+      const stop = () => controller.abort();
+      process.once("SIGINT", stop);
+      process.once("SIGTERM", stop);
+      try {
+        await runRpcPolling(
+          connection,
+          discovery.programByProgramData,
+          repository,
+          { cluster: config.SOLANA_CLUSTER, maxSignatures: config.RPC_BACKFILL_MAX_SIGNATURES },
+          controller.signal
+        );
+      } finally {
+        process.off("SIGINT", stop);
+        process.off("SIGTERM", stop);
+      }
+      await repository.updateServiceStatus({ serviceId: "indexer", state: "stopped" });
+      return;
+    }
     const summary = await reconcileLoaderV3(
       connection,
       discovery.programByProgramData,
@@ -39,7 +68,7 @@ async function main(): Promise<void> {
       { cluster: config.SOLANA_CLUSTER, maxSignatures: config.RPC_BACKFILL_MAX_SIGNATURES }
     );
     process.stdout.write(`${JSON.stringify({ reconciliation: summary })}\n`);
-    if (process.argv.includes("--reconcile")) {
+    if (reconcileOnly) {
       if (config.WATCHED_ACCOUNT_IDS.length > 0) {
         throw new Error(
           "RPC-only reconciliation cannot reconstruct historical watched-account bytes; use Yellowstone replay"

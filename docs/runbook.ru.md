@@ -18,6 +18,7 @@
 4. Yellowstone v10 использует native N-API; live процесс запускается в Linux/Dev Container. Replay/RPC/API работают на Windows.
 5. Если outage содержит больше `RPC_BACKFILL_MAX_SIGNATURES`, indexer останавливается с явной ошибкой и не продвигает cursor.
 6. Первый запуск ограничен `RPC_BACKFILL_MAX_SIGNATURES`; `initialHistoryCapped` в summary означает, что более старая история не проверена. Для обычных watched accounts RPC не восстанавливает старые bytes: требуется Yellowstone replay с достаточным retention.
+7. Для бесплатного непрерывного devnet-наблюдения за loader-v3 программами запустить `pnpm --filter @sentinel/indexer start -- --poll-rpc`. Режим делает reconciliation каждые 30 секунд, обновляет heartbeat и checkpoint, завершается при недоступной истории. `WATCHED_ACCOUNT_IDS` не поддерживаются. Публичный RPC имеет лимиты и не подходит для production.
 
 ## Локальные devnet-ключи
 

@@ -82,6 +82,8 @@ Admin registry, publisher и deployment authority — разные роли. К�
 
 Yellowstone снижает latency, но не является durable queue Sentinel. Каждый reconnect инициирует reconciliation от durable checkpoint до актуального finalized slot. Cursor нельзя продвигать раньше атомарного сохранения обработанного диапазона.
 
+Для бесплатной devnet-проверки доступен режим `--poll-rpc`: каждые 30 секунд он сверяет finalized подписи наблюдаемых loader-v3 ProgramData accounts, сохраняет checkpoint и heartbeat. Этот режим не получает исторические bytes обычных watched accounts, ограничен rate limits и сроком хранения RPC history; при недоступном сохранённом cursor останавливается. Он не заменяет Yellowstone для полного live coverage.
+
 ### 5.3 PostgreSQL и transactional outbox
 
 PostgreSQL хранит нормализованные факты, findings, evidence, checkpoints и delivery state. Redis не требуется для корректности foundation. Notification создаётся в той же транзакции, что finding; worker получает записи через `FOR UPDATE SKIP LOCKED` и идемпотентный destination key.
@@ -367,9 +369,9 @@ deploy → upgrade → Yellowstone/RPC → event → finding → API → registr
 | PostgreSQL schema            | Реализовано                              | migration + CI double-apply                                 |
 | Atomic webhook outbox        | Реализовано                              | PostgreSQL integration test; реальный endpoint ещё нужен    |
 | API/dashboard                | Реализовано, pre-production              | findings/evidence/status API и runtime dashboard            |
-| Anchor registry              | Реализован на уровне source/unit compile | local-validator integration ещё не выполнен                 |
+| Anchor registry              | Реализован и проверен на local-validator | 6 local-validator сценариев; devnet deployment отсутствует  |
 | Yellowstone live correlation | Реализовано, внешний E2E не выполнен     | finalized replay/reconnect/correlation; нужен provider      |
-| RPC reconciliation           | Реализовано, внешний E2E не выполнен     | durable cursor/backfill/gap gate; нужен test target         |
+| RPC reconciliation/polling   | Реализовано, внешний E2E не выполнен     | durable cursor/backfill/gap gate; devnet read-only smoke    |
 | Detection engine             | Реализовано, стартовый набор правил      | versioned loader-v3 rules и unit tests                      |
 | Webhook delivery             | Реализовано, pre-production              | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E |
 | Publisher/registry SDK       | Реализовано, выключено fail-closed       | транзакции не отправлялись; требуется deployed program      |

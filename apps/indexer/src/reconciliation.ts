@@ -154,6 +154,11 @@ export async function reconcileLoaderV3(
         `RPC reconciliation cannot reach the saved checkpoint for ${programDataAddress}; history may be pruned`
       );
     }
+    if (!checkpoint && signatures.length === 0) {
+      throw new Error(
+        `RPC reconciliation cannot establish an initial signature cursor for ${programDataAddress}`
+      );
+    }
     summary.signatures += signatures.length;
     for (const info of signatures.toReversed()) {
       if (info.err) continue;
