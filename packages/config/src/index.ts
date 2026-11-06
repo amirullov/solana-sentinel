@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import { loadEnvFile } from "node:process";
 import { z } from "zod";
 
 const optionalUrl = z.preprocess((value) => (value === "" ? undefined : value), z.url().optional());
@@ -50,6 +52,10 @@ export const RuntimeConfigSchema = z.object({
 export type RuntimeConfig = z.infer<typeof RuntimeConfigSchema>;
 
 export function loadConfig(environment: NodeJS.ProcessEnv = process.env): RuntimeConfig {
+  if (environment === process.env) {
+    const envFile = new URL("../../../.env", import.meta.url);
+    if (existsSync(envFile)) loadEnvFile(envFile);
+  }
   const config = RuntimeConfigSchema.parse(environment);
   if (config.PUBLISHER_ENABLED && !config.PUBLISHER_KEYPAIR_PATH) {
     throw new Error("PUBLISHER_KEYPAIR_PATH is required when publication is enabled");
