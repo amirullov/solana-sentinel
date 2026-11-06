@@ -12,7 +12,7 @@ interface FindingRow {
 
 interface StatusResponse {
   state: string;
-  checkpoints: Array<{ lag_slots: string | null }>;
+  checkpoints: Array<{ cluster: string; lag_slots: string | null }>;
   claims: { mainnetDeployed: boolean; verifiedBuild: boolean };
 }
 
@@ -40,6 +40,8 @@ function short(value: string): string {
 
 export default async function HomePage() {
   const { findings, status } = await loadDashboard();
+  const mainnetObservation =
+    status?.checkpoints.some((checkpoint) => checkpoint.cluster === "mainnet-beta") ?? false;
   const observedLags = status?.checkpoints
     .map((item) => item.lag_slots)
     .filter((lag): lag is string => lag !== null);
@@ -56,14 +58,18 @@ export default async function HomePage() {
       <nav>
         <span className="mark">S</span>
         <span>Solana Sentinel</span>
-        <span className="status">Devnet pilot · mainnet not deployed</span>
+        <span className="status">
+          {mainnetObservation
+            ? "Mainnet observation · read only"
+            : "Devnet pilot · mainnet not deployed"}
+        </span>
       </nav>
       <section className="hero">
         <p className="eyebrow">ON-CHAIN SECURITY INTELLIGENCE</p>
         <h1>Critical changes should leave verifiable evidence.</h1>
         <p className="lede">
-          Finalized Solana program and account changes become deduplicated facts, reproducible
-          evidence bundles and, after an explicit release gate, on-chain attestations.
+          Finalized Solana program changes become deduplicated facts and reproducible evidence
+          bundles. Selected devnet findings can also be attested on-chain.
         </p>
       </section>
       <section className="grid" aria-label="Runtime status">
@@ -81,7 +87,11 @@ export default async function HomePage() {
           <span>{status ? "Live API" : "API unavailable"}</span>
         </div>
         {findings.length === 0 ? (
-          <p className="empty">No persisted findings are available in the connected environment.</p>
+          <p className="empty">
+            {mainnetObservation
+              ? "No matching changes in the checked mainnet window. Earlier history was not fully checked."
+              : "No persisted findings are available in the connected environment."}
+          </p>
         ) : (
           findings.slice(0, 20).map((finding) => (
             <div className="finding" key={finding.finding_id}>
@@ -100,8 +110,9 @@ export default async function HomePage() {
       <section className="notice">
         <strong>Verification boundary</strong>
         <p>
-          An attestation proves which evidence hash a publisher committed. It does not prove that a
-          protocol is safe. This environment makes no mainnet or verified-build claim.
+          {mainnetObservation
+            ? "This dashboard only reads mainnet data. Sentinel has no mainnet registry or on-chain attestations, and does not claim that a protocol is safe."
+            : "An attestation proves which evidence hash a publisher committed. It does not prove that a protocol is safe. This environment makes no mainnet or verified-build claim."}
         </p>
       </section>
     </main>
