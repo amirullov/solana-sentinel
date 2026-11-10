@@ -18,6 +18,8 @@ Jupiter [указывает](https://developers.jup.ag/docs/swap/v1/common-error
 | Severity      | `medium` — классификация правила, не оценка безопасности Jupiter   |
 | Evidence hash | `44a31baf73549f02921bd73e8fc93ffbc2036d32a5fc189539a1355c40b5517c` |
 
+[Снимок панели](assets/sentinel-dashboard.png) · [Снимок страницы доказательств](assets/sentinel-evidence.png)
+
 Полный event, finding и evidence bundle сохранены в [JSON](jupiter-mainnet-evidence.json). Воспроизведение из корня репозитория после `pnpm install` и `pnpm build`:
 
 ```bash

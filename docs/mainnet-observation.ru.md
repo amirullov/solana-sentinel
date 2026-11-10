@@ -24,3 +24,32 @@ Solana Sentinel локально опрашивает finalized данные п�
 Чтобы вернуться к devnet на этом компьютере, остановить три процесса, скопировать `.env.devnet.local` обратно в `.env` и запустить их снова. Devnet и mainnet базы остаются раздельными.
 
 Обновление 10 ноября: после открытия Docker Desktop база снова стала healthy. Исторический [кейс обновления Jupiter](case-study-jupiter-mainnet.ru.md) импортирован в PostgreSQL и показан в панели; API и RPC-опрос были запущены заново. `/v1/status` во время проверки вернул `operational`. Для дальнейшей работы процессы должны оставаться запущенными.
+
+## Запуск в новом клоне без оплаты
+
+В новом клоне репозитория нужен Node.js 24+, pnpm 11.25+ и Docker Desktop. Файл [.env.mainnet.example](../.env.mainnet.example) содержит только публичные адреса и настройки чтения. В PowerShell из корня проекта:
+
+```powershell
+Copy-Item .env.mainnet.example .env
+pnpm install --frozen-lockfile
+pnpm db:up
+pnpm db:migrate
+pnpm build
+```
+
+Запустить индексатор, API и панель в трёх отдельных терминалах:
+
+```powershell
+pnpm --filter @sentinel/indexer start -- --poll-rpc
+pnpm --filter @sentinel/api start
+pnpm --filter @sentinel/web start
+```
+
+Панель откроется на `http://localhost:3000`. Первый опрос ограничен 20 последними подписями ProgramData и **не покрывает всю историю**. Чтобы добавить именно исторический Jupiter-кейс, отдельно выполнить:
+
+```powershell
+pnpm --filter @sentinel/indexer import:signature C3Wt7dTJ12Jb8zNBDrhoTQFRRtbpaWqXSF749HZPBvUXaAqCZVLRBQmyMwfjA1c8RboxujWENqQThxKXKAMAYg9
+pnpm portfolio:check
+```
+
+Импорт зависит от того, отдаёт ли выбранный RPC эту старую finalized транзакцию. Если он её не отдаёт, [зафиксированный кейс и evidence](case-study-jupiter-mainnet.ru.md) остаются доступны в репозитории, но локальная база не получит находку и `portfolio:check` не пройдёт. Пилот не требует ключей или SOL и ничего не публикует в mainnet.

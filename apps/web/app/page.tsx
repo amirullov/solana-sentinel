@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export const dynamic = "force-dynamic";
 
 interface FindingRow {
@@ -6,6 +8,7 @@ interface FindingRow {
   severity: string;
   event_type: string;
   target_address: string;
+  cluster: string;
   signature: string;
   slot: string;
 }
@@ -94,16 +97,21 @@ export default async function HomePage() {
           </p>
         ) : (
           findings.slice(0, 20).map((finding) => (
-            <div className="finding" key={finding.finding_id}>
+            <Link
+              className="finding findingLink"
+              href={`/findings/${finding.finding_id}`}
+              key={finding.finding_id}
+            >
               <span className={`severity severity-${finding.severity}`}>{finding.severity}</span>
               <div>
                 <strong>{finding.title}</strong>
                 <p>
-                  {short(finding.target_address)} · slot {finding.slot} · tx{" "}
+                  {finding.cluster} · {short(finding.target_address)} · slot {finding.slot} · tx{" "}
                   {short(finding.signature)}
                 </p>
               </div>
-            </div>
+              <span className="findingAction">View evidence →</span>
+            </Link>
           ))
         )}
       </section>

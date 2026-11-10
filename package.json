@@ -30,6 +30,7 @@
     "db:up": "docker compose -f infra/docker/compose.yml up -d postgres",
     "db:down": "docker compose -f infra/docker/compose.yml down",
     "db:migrate": "node scripts/migrate.mjs",
+    "portfolio:check": "pnpm --filter @sentinel/evidence build && node scripts/check-portfolio.mjs",
     "rust:fmt": "cargo fmt --all -- --check",
     "rust:lint": "cargo clippy --workspace --all-targets -- -D warnings",
     "rust:test": "cargo test --workspace"

@@ -1,6 +1,7 @@
 node_modules/
 .pnpm-store/
 .next/
+.playwright-mcp/
 dist/
 coverage/
 *.tsbuildinfo

@@ -38,6 +38,13 @@ nav {
   border-bottom: 1px solid var(--line);
   font-weight: 650;
 }
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
 .mark {
   display: grid;
   place-items: center;
@@ -140,10 +147,23 @@ article p,
 }
 .finding {
   display: grid;
-  grid-template-columns: 90px 1fr;
+  grid-template-columns: 90px minmax(0, 1fr) auto;
   gap: 18px;
   padding: 20px 24px;
   border-bottom: 1px solid var(--line);
+}
+.findingLink {
+  color: inherit;
+  text-decoration: none;
+}
+.findingLink:hover,
+.findingLink:focus-visible {
+  background: #17201e;
+}
+.findingAction {
+  align-self: center;
+  color: var(--green);
+  font-size: 13px;
 }
 .finding:last-child {
   border-bottom: 0;
@@ -175,6 +195,80 @@ article p,
   color: #f6d572;
   background: #211b0b;
 }
+.detailPage {
+  max-width: 1120px;
+}
+.backLink {
+  display: inline-block;
+  margin-top: 32px;
+  color: var(--green);
+  text-decoration: none;
+}
+.detailHeader {
+  padding: 56px 0 48px;
+}
+.detailHeader h1 {
+  font-size: clamp(36px, 6vw, 68px);
+  overflow-wrap: anywhere;
+}
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--line);
+}
+.detailGrid > div {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 24px;
+  background: var(--panel);
+}
+.detailGrid span,
+.evidenceFields dt {
+  color: var(--muted);
+  font-size: 13px;
+}
+.detailGrid code,
+.evidenceFields dd {
+  overflow-wrap: anywhere;
+  font:
+    13px/1.6 ui-monospace,
+    monospace;
+}
+.evidencePanel {
+  margin-top: 24px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+}
+.evidenceFields {
+  margin: 0;
+  padding: 12px 24px;
+}
+.evidenceFields > div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.evidenceFields dd {
+  margin: 0;
+}
+.evidenceActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px 24px;
+}
+.evidenceActions a {
+  color: var(--green);
+}
 @media (max-width: 700px) {
   .hero {
     padding-top: 64px;
@@ -187,5 +281,19 @@ article p,
   }
   .status {
     display: none;
+  }
+  .finding {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .findingAction {
+    margin-top: 4px;
+  }
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
+  .evidenceFields > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }

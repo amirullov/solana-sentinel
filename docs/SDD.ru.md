@@ -142,6 +142,8 @@ Publisher выбирает только finalized loader-v3 finding, повто�
 
 UI различает факт, finding и attestation. Пустое состояние не заменяется демонстрационными mainnet цифрами. Verifier получает bundle, пересчитывает hash, читает Finding PDA и показывает каждую проверку отдельно.
 
+В портфолио-MVP dashboard показывает состояние индексатора и список сохранённых findings. Страница finding раскрывает Event ID, evidence hash, source hash и ссылку на исходную транзакцию. Она отображает сохранённые данные; независимая проверка on-chain attestation выполняется отдельным verifier CLI. Локальная команда `pnpm portfolio:check` пересчитывает hash исторического Jupiter bundle, сверяет запись API и доступность страниц.
+
 ## 7. Нормализованное событие
 
 ```ts
@@ -368,7 +370,7 @@ CI настроен для format, lint, TypeScript typecheck/tests/build, Rust 
 | Replay/idempotency            | Реализовано, fixture foundation        | synthetic fixture; historical corpus ещё нужен              |
 | PostgreSQL schema             | Реализовано                            | миграции повторно применены к локальной БД                  |
 | Atomic webhook outbox         | Реализовано                            | PostgreSQL integration test; реальный endpoint ещё нужен    |
-| API/dashboard                 | Реализовано, pre-production            | findings/evidence/status API и runtime dashboard            |
+| API/dashboard                 | Реализовано, pre-production            | findings/evidence/status API, страницы списка и evidence    |
 | Anchor registry               | Проверен локально и развёрнут в devnet | Program ID, RegistryConfig PDA и две Finding PDA            |
 | Yellowstone live correlation  | Реализовано, внешний E2E не выполнен   | finalized replay/reconnect/correlation; нужен provider      |
 | RPC reconciliation/polling    | Devnet authority-change E2E выполнен   | два finalized events, checkpoint и heartbeat                |
@@ -379,6 +381,7 @@ CI настроен для format, lint, TypeScript typecheck/tests/build, Rust 
 | Local-validator suite         | Выполнен локально                      | 6 сценариев; SBF v0/platform tools v1.58, не devnet         |
 | Devnet deployment/E2E         | Выполнено для authority rotation       | реальные signatures в devnet validation report              |
 | Mainnet read-only observation | Проверен локально 10 ноября            | Jupiter Swap V6, отдельная БД и историческая находка        |
+| Portfolio demo check          | Проверен локально 10 ноября            | сохранённый evidence hash пересчитан, API и UI доступны     |
 | Mainnet deployment            | Не выполнено                           | отдельный mainnet Program ID не создан                      |
 | Verified build                | Не выполнено                           | verification artifact отсутствует                           |
 

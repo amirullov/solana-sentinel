@@ -1,10 +1,26 @@
 # Solana Sentinel
 
-[![CI](https://github.com/amirullov/solana-sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/amirullov/solana-sentinel/actions/workflows/ci.yml)
-
-Solana Sentinel — основа системы наблюдения за критическими изменениями Solana-программ и аккаунтов. Она формирует воспроизводимые evidence hashes и публикует подтверждённые findings в собственный on-chain registry. Публикация пока проверена только в devnet для смены upgrade authority.
+Solana Sentinel — портфолио-MVP системы наблюдения за критическими изменениями Solana-программ. Она сохраняет события и проверяемые evidence hashes; отдельный реестр позволяет публиковать findings в devnet. Бесплатный локальный режим читает mainnet без отправки транзакций.
 
 > Текущий статус: registry развёрнут в devnet, а две реальные смены upgrade authority прошли цепочку RPC polling → finding → on-chain attestation → независимый verifier. Локальный read-only pilot Jupiter Swap V6 проверен на mainnet; историческая находка сохранена в PostgreSQL и показана в панели 10 ноября. Yellowstone live E2E, mainnet deployment, production monitoring и verified build **не выполнялись**. GitHub Actions CI заблокирован состоянием billing аккаунта; локальные проверки прошли.
+
+## Портфолио-демо
+
+Панель показывает состояние локального наблюдателя и историческое обновление Jupiter Swap V6. Нажатие на находку открывает Event ID, evidence hash и ссылку на исходную транзакцию. Это **исторический импорт**, не обнаружение события в реальном времени.
+
+![Панель Solana Sentinel](docs/assets/sentinel-dashboard.png)
+
+Снимок локального запуска 10 ноября 2026 года; он не подтверждает постоянную доступность.
+
+[Экран доказательств](docs/assets/sentinel-evidence.png) · [Кейс и исходные данные](docs/case-study-jupiter-mainnet.ru.md) · [Подробный SDD](docs/SDD.ru.md)
+
+На компьютере с работающими PostgreSQL, API, индексатором и панелью проверка демо выполняется одной командой:
+
+```bash
+pnpm portfolio:check
+```
+
+Команда сверяет локальную запись с сохранённым Jupiter evidence, заново вычисляет SHA-256, проверяет состояние индексатора и обе страницы. Она не отправляет транзакций. Для запуска пилота в новом клоне есть [.env.mainnet.example](.env.mainnet.example) и [инструкция](docs/mainnet-observation.ru.md); публичный RPC может не отдать старую транзакцию для повторного импорта.
 
 ## Что уже есть
 
@@ -70,9 +86,9 @@ docs/       SDD, threat model, runbook, ADR
 tests/      replay fixtures
 ```
 
-## Текущий этап и следующий шаг
+## Границы результата
 
-Milestone 2 — контролируемый devnet E2E для смены upgrade authority выполнен через бесплатные RPC. Local-validator suite прошёл 6 сценариев. Yellowstone stream и исторические watched-account bytes требуют отдельной проверки. Реальные адреса, подписи и ограничения: [отчёт devnet](docs/devnet-validation.ru.md).
+Портфолио-MVP и контролируемый devnet E2E для смены upgrade authority выполнены. Local-validator suite прошёл 6 сценариев. Yellowstone stream и исторические watched-account bytes требуют отдельной проверки. Локальное наблюдение работает только при включённом компьютере; публичный RPC ограничен и не подходит для production. Реальные адреса, подписи и ограничения: [отчёт devnet](docs/devnet-validation.ru.md).
 
 Подробности: [Software Design Document](docs/SDD.ru.md), [threat model](docs/threat-model.ru.md), [runbook](docs/runbook.ru.md).
 
