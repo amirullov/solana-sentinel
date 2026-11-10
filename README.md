@@ -4,7 +4,7 @@
 
 Solana Sentinel — основа системы наблюдения за критическими изменениями Solana-программ и аккаунтов. Она формирует воспроизводимые evidence hashes и публикует подтверждённые findings в собственный on-chain registry. Публикация пока проверена только в devnet для смены upgrade authority.
 
-> Текущий статус: registry развёрнут в devnet, а две реальные смены upgrade authority прошли цепочку RPC polling → finding → on-chain attestation → независимый verifier. Локальный read-only pilot также наблюдает за Jupiter Swap V6 в mainnet без отправки транзакций. Yellowstone live E2E, mainnet deployment, production monitoring и verified build **не выполнялись**. Последний GitHub Actions CI заблокирован состоянием billing аккаунта; локальные проверки прошли.
+> Текущий статус: registry развёрнут в devnet, а две реальные смены upgrade authority прошли цепочку RPC polling → finding → on-chain attestation → независимый verifier. Локальный read-only pilot Jupiter Swap V6 был проверен на mainnet; после перезапуска компьютера 10 ноября его база и панель пока не запущены. Yellowstone live E2E, mainnet deployment, production monitoring и verified build **не выполнялись**. Последний GitHub Actions CI заблокирован состоянием billing аккаунта; локальные проверки прошли.
 
 ## Что уже есть
 
@@ -51,7 +51,9 @@ pnpm --filter @sentinel/indexer start -- --poll-rpc
 
 Режим опрашивает finalized историю каждые 30 секунд и сохраняет checkpoint. Он ограничен лимитами публичного RPC и не восстанавливает исторические bytes обычных watched accounts; `WATCHED_ACCOUNT_IDS` в этом режиме запрещён. На двух devnet транзакциях проверена цепочка наблюдения и публикации для смены upgrade authority.
 
-На этом компьютере отдельно запущен бесплатный read-only mainnet pilot для Jupiter Swap V6. Он использует другую локальную базу и не публикует on-chain записи. Настройки, проверенный результат и команды повторного запуска: [mainnet observation](docs/mainnet-observation.ru.md).
+На этом компьютере настроен бесплатный read-only mainnet pilot для Jupiter Swap V6. Он использует другую локальную базу и не публикует on-chain записи. Настройки, проверенный результат 6 ноября и команды повторного запуска: [mainnet observation](docs/mainnet-observation.ru.md).
+
+Историческая транзакция обновления Jupiter Swap V6 теперь воспроизводится с учётом вложенной loader-v3 инструкции. [Кейс и evidence](docs/case-study-jupiter-mainnet.ru.md) показывают результат локального `dry-run`; запись в PostgreSQL и панель после перезапуска компьютера ещё не проверены.
 
 Live mode дополнительно требует `YELLOWSTONE_ENDPOINT` и, если нужен провайдеру, `YELLOWSTONE_X_TOKEN`. Нативный Yellowstone client запускайте в Linux/Dev Container; текущий пакет не поставляет Windows N-API binary.
 

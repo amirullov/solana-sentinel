@@ -1,12 +1,12 @@
 # Бесплатное наблюдение за mainnet — 6 ноября 2026
 
-## Что запущено
+## Что было запущено 6 ноября
 
 Solana Sentinel локально опрашивает finalized данные публичного mainnet RPC для Jupiter Swap V6 — `JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4`. Jupiter [указывает этот Program ID в документации](https://developers.jup.ag/docs/swap/v1/common-errors). Запрос к mainnet подтвердил владельца `BPFLoaderUpgradeab1e11111111111111111111111`, ProgramData `4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT` и существующую upgrade authority.
 
-Режим `--poll-rpc` читает историю ProgramData каждые 30 секунд и сохраняет checkpoint в отдельной локальной базе `sentinel_mainnet`. API и панель доступны на `http://localhost:4100` и `http://localhost:3000`. Devnet-данные сохранены в другой базе, а прежняя локальная конфигурация — в игнорируемом Git файле `.env.devnet.local` на этом компьютере.
+Режим `--poll-rpc` читал историю ProgramData каждые 30 секунд и сохранял checkpoint в отдельной локальной базе `sentinel_mainnet`. API и панель были доступны на `http://localhost:4100` и `http://localhost:3000`. Devnet-данные сохранены в другой базе, а прежняя локальная конфигурация — в игнорируемом Git файле `.env.devnet.local` на этом компьютере.
 
-`PUBLISHER_ENABLED=false`, keypair для mainnet не задан. Процессы не отправляют транзакции и не тратят SOL. В mainnet **не развёрнуты** Sentinel registry, Finding PDA и verified build. Панель показывает только локальные результаты наблюдения, а не on-chain attestations Sentinel.
+`PUBLISHER_ENABLED=false`, keypair для mainnet не задан. Процессы не отправляли транзакции и не тратили SOL. В mainnet **не развёрнуты** Sentinel registry, Finding PDA и verified build. Панель показывает только локальные результаты наблюдения, а не on-chain attestations Sentinel.
 
 ## Проверенный старт
 
@@ -22,3 +22,5 @@ Solana Sentinel локально опрашивает finalized данные п�
 Публичный RPC ограничен по запросам, может не хранить нужные старые транзакции и не даёт гарантии доступности. При потере доступной истории индексатор остановится с ошибкой вместо тихого продвижения checkpoint. Мониторинг работает, только пока включён компьютер и запущены локальные процессы. Режим не восстанавливает исторические bytes произвольных watched accounts; он наблюдает loader-v3 ProgramData.
 
 Чтобы вернуться к devnet на этом компьютере, остановить три процесса, скопировать `.env.devnet.local` обратно в `.env` и запустить их снова. Devnet и mainnet базы остаются раздельными.
+
+Обновление 10 ноября: после перезапуска компьютера Docker Desktop не поднял локальную базу из-за ошибки Unix socket, поэтому API, панель и непрерывный опрос сейчас не работают. Исторический [кейс обновления Jupiter](case-study-jupiter-mainnet.ru.md) воспроизводится без базы через `--dry-run`. Возобновление мониторинга нужно проверить после восстановления Docker.

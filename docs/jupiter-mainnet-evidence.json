@@ -1,0 +1,63 @@
+{
+  "signature": "C3Wt7dTJ12Jb8zNBDrhoTQFRRtbpaWqXSF749HZPBvUXaAqCZVLRBQmyMwfjA1c8RboxujWENqQThxKXKAMAYg9",
+  "cluster": "mainnet-beta",
+  "dryRun": true,
+  "facts": [
+    {
+      "type": "PROGRAM_UPGRADED",
+      "signature": "C3Wt7dTJ12Jb8zNBDrhoTQFRRtbpaWqXSF749HZPBvUXaAqCZVLRBQmyMwfjA1c8RboxujWENqQThxKXKAMAYg9",
+      "slot": 462802085,
+      "programAddress": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+      "programDataAddress": "4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT",
+      "instructionIndex": 3,
+      "sourceHash": "684b5203abcdcbe9050b64dd419719d6644eb479f28211587786e0551e39a079"
+    }
+  ],
+  "events": [
+    {
+      "eventId": "e268a03061deb5c704a5b489583c3396c73237e4123e5002c2e9b082051f8d19",
+      "type": "PROGRAM_UPGRADED",
+      "cluster": "mainnet-beta",
+      "targetAddress": "4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT",
+      "programAddress": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4",
+      "signature": "C3Wt7dTJ12Jb8zNBDrhoTQFRRtbpaWqXSF749HZPBvUXaAqCZVLRBQmyMwfjA1c8RboxujWENqQThxKXKAMAYg9",
+      "slot": 462802085,
+      "commitment": "finalized",
+      "observedAt": "2026-10-29T07:47:21.000Z",
+      "sourceHash": "684b5203abcdcbe9050b64dd419719d6644eb479f28211587786e0551e39a079"
+    }
+  ],
+  "findings": [
+    {
+      "findingId": "a78d32a5-7053-5fe1-8b95-9a3d27de5b93",
+      "eventId": "e268a03061deb5c704a5b489583c3396c73237e4123e5002c2e9b082051f8d19",
+      "ruleId": "loader-v3-program-upgraded",
+      "ruleVersion": 1,
+      "severity": "medium",
+      "title": "Upgradeable program code changed",
+      "evidenceHash": "44a31baf73549f02921bd73e8fc93ffbc2036d32a5fc189539a1355c40b5517c",
+      "evidence": {
+        "schema": "solana-sentinel/evidence/v1",
+        "eventId": "e268a03061deb5c704a5b489583c3396c73237e4123e5002c2e9b082051f8d19",
+        "facts": {
+          "cluster": "mainnet-beta",
+          "targetAddress": "4Ec7ZxZS6Sbdg5UGSLHbAnM7GQHp2eFd4KYWRexAipQT",
+          "signature": "C3Wt7dTJ12Jb8zNBDrhoTQFRRtbpaWqXSF749HZPBvUXaAqCZVLRBQmyMwfjA1c8RboxujWENqQThxKXKAMAYg9",
+          "slot": 462802085,
+          "commitment": "finalized",
+          "sourceHash": "684b5203abcdcbe9050b64dd419719d6644eb479f28211587786e0551e39a079",
+          "programAddress": "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+        },
+        "sources": [
+          {
+            "kind": "solana-transaction",
+            "cluster": "mainnet-beta",
+            "signature": "C3Wt7dTJ12Jb8zNBDrhoTQFRRtbpaWqXSF749HZPBvUXaAqCZVLRBQmyMwfjA1c8RboxujWENqQThxKXKAMAYg9",
+            "slot": 462802085
+          }
+        ]
+      },
+      "createdAt": "2026-10-29T07:47:21.000Z"
+    }
+  ]
+}

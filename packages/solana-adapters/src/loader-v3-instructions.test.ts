@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  flattenTransactionInstructions,
   LOADER_V3_INSTRUCTION_TAGS,
   parseLoaderV3Instructions,
   type TransactionInstructionInput
@@ -55,5 +56,26 @@ describe("loader-v3 instruction parser", () => {
     expect(parseLoaderV3Instructions(input, new Map([[programData, program]]))[0]?.type).toBe(
       "UPGRADE_AUTHORITY_CHANGED"
     );
+  });
+
+  it("detects a loader upgrade invoked inside another program", () => {
+    const outer = [{ programIdIndex: 2, accounts: [1], data: new Uint8Array([9]) }];
+    const instructions = flattenTransactionInstructions(outer, [
+      {
+        index: 0,
+        instructions: [{ programIdIndex: 0, accounts: [1, 2], data: instructionData(3) }]
+      }
+    ]);
+    const facts = parseLoaderV3Instructions(
+      {
+        signature: "5".repeat(64),
+        slot: 42,
+        accountKeys: [UPGRADEABLE_LOADER_PROGRAM_ID.toBase58(), programData, program],
+        instructions
+      },
+      new Map([[programData, program]])
+    );
+    expect(facts).toHaveLength(1);
+    expect(facts[0]).toMatchObject({ type: "PROGRAM_UPGRADED", instructionIndex: 1 });
   });
 });

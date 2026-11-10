@@ -7,7 +7,7 @@ import {
   findFindingAddress,
   findRegistryAddress
 } from "@sentinel/registry-sdk";
-import { parseLoaderV3Instructions } from "@sentinel/solana-adapters";
+import { normalizeRpcTransaction, parseLoaderV3Instructions } from "@sentinel/solana-adapters";
 import {
   Connection,
   Keypair,
@@ -43,23 +43,8 @@ async function verifySource(connection: Connection, finding: PublishableFinding)
   if (!transaction || transaction.meta?.err || transaction.slot !== Number(finding.slot)) {
     throw new Error("Source transaction is unavailable or differs from persisted slot");
   }
-  const loadedAddresses = transaction.meta?.loadedAddresses;
-  const accountKeys = transaction.transaction.message
-    .getAccountKeys(loadedAddresses ? { accountKeysFromLookups: loadedAddresses } : undefined)
-    .keySegments()
-    .flat()
-    .map((key) => key.toBase58());
   const facts = parseLoaderV3Instructions(
-    {
-      signature: finding.signature,
-      slot: transaction.slot,
-      accountKeys,
-      instructions: transaction.transaction.message.compiledInstructions.map((instruction) => ({
-        programIdIndex: instruction.programIdIndex,
-        accounts: Array.from(instruction.accountKeyIndexes),
-        data: Uint8Array.from(instruction.data)
-      }))
-    },
+    normalizeRpcTransaction(finding.signature, transaction),
     new Map([[finding.target_address, finding.program_address]])
   );
   if (

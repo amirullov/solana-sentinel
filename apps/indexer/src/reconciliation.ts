@@ -2,9 +2,9 @@ import { createEventId, parseChainEvent, type SolanaCluster } from "@sentinel/co
 import type { EventRepository } from "@sentinel/database";
 import { detectFinding } from "@sentinel/detection";
 import {
+  normalizeRpcTransaction,
   parseLoaderV3Instructions,
-  type LoaderV3InstructionFact,
-  type TransactionInstructionInput
+  type LoaderV3InstructionFact
 } from "@sentinel/solana-adapters";
 import { PublicKey, type Connection } from "@solana/web3.js";
 
@@ -20,29 +20,6 @@ export interface ReconciliationSummary {
   readonly inserted: number;
   readonly duplicates: number;
   readonly initialHistoryCapped: number;
-}
-
-function normalizeRpcTransaction(
-  signature: string,
-  slot: number,
-  response: NonNullable<Awaited<ReturnType<Connection["getTransaction"]>>>
-): TransactionInstructionInput {
-  const loadedAddresses = response.meta?.loadedAddresses;
-  const keys = response.transaction.message
-    .getAccountKeys(loadedAddresses ? { accountKeysFromLookups: loadedAddresses } : undefined)
-    .keySegments()
-    .flat()
-    .map((key) => key.toBase58());
-  return {
-    signature,
-    slot,
-    accountKeys: keys,
-    instructions: response.transaction.message.compiledInstructions.map((instruction) => ({
-      programIdIndex: instruction.programIdIndex,
-      accounts: Array.from(instruction.accountKeyIndexes),
-      data: Uint8Array.from(instruction.data)
-    }))
-  };
 }
 
 export async function saveLoaderFact(
@@ -169,8 +146,11 @@ export async function reconcileLoaderV3(
       if (!response) {
         throw new Error(`RPC transaction unavailable for finalized signature ${info.signature}`);
       }
+      if (response.slot !== info.slot) {
+        throw new Error(`RPC transaction slot mismatch for finalized signature ${info.signature}`);
+      }
       summary.transactions += 1;
-      const transaction = normalizeRpcTransaction(info.signature, info.slot, response);
+      const transaction = normalizeRpcTransaction(info.signature, response);
       const facts = parseLoaderV3Instructions(transaction, programByProgramData).filter(
         (fact) => fact.programDataAddress === programDataAddress
       );

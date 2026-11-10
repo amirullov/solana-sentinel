@@ -1,6 +1,7 @@
 import type { SolanaCluster } from "@sentinel/core";
 import type { EventRepository } from "@sentinel/database";
 import {
+  flattenTransactionInstructions,
   parseLoaderV3Instructions,
   publicKeysFromBytes,
   UPGRADEABLE_LOADER_PROGRAM_ID,
@@ -57,11 +58,21 @@ class LiveCorrelator {
         ...(info.meta?.loadedWritableAddresses ?? []),
         ...(info.meta?.loadedReadonlyAddresses ?? [])
       ]),
-      instructions: message.instructions.map((instruction) => ({
-        programIdIndex: instruction.programIdIndex,
-        accounts: Array.from(instruction.accounts),
-        data: instruction.data
-      }))
+      instructions: flattenTransactionInstructions(
+        message.instructions.map((instruction) => ({
+          programIdIndex: instruction.programIdIndex,
+          accounts: Array.from(instruction.accounts),
+          data: instruction.data
+        })),
+        (info.meta?.innerInstructions ?? []).map((group) => ({
+          index: group.index,
+          instructions: group.instructions.map((instruction) => ({
+            programIdIndex: instruction.programIdIndex,
+            accounts: Array.from(instruction.accounts),
+            data: instruction.data
+          }))
+        }))
+      )
     };
     const facts = parseLoaderV3Instructions(input, this.options.programByProgramData);
     this.#facts.set(signature, facts);

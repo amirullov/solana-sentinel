@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, type VersionedTransactionResponse } from "@solana/web3.js";
+import bs58 from "bs58";
 import { UPGRADEABLE_LOADER_PROGRAM_ID } from "./loader-v3.js";
 
 export interface CompiledInstructionInput {
@@ -13,6 +14,58 @@ export interface TransactionInstructionInput {
   readonly slot: number;
   readonly accountKeys: readonly string[];
   readonly instructions: readonly CompiledInstructionInput[];
+}
+
+export interface InnerInstructionGroupInput {
+  readonly index: number;
+  readonly instructions: readonly CompiledInstructionInput[];
+}
+
+export function flattenTransactionInstructions(
+  outer: readonly CompiledInstructionInput[],
+  inner: readonly InnerInstructionGroupInput[]
+): CompiledInstructionInput[] {
+  const groups = new Map<number, CompiledInstructionInput[]>();
+  for (const group of inner) {
+    if (!Number.isSafeInteger(group.index) || group.index < 0 || group.index >= outer.length) {
+      throw new Error("Inner instruction has an invalid outer index");
+    }
+    const instructions = groups.get(group.index) ?? [];
+    instructions.push(...group.instructions);
+    groups.set(group.index, instructions);
+  }
+  return outer.flatMap((instruction, index) => [instruction, ...(groups.get(index) ?? [])]);
+}
+
+export function normalizeRpcTransaction(
+  signature: string,
+  response: VersionedTransactionResponse
+): TransactionInstructionInput {
+  const loadedAddresses = response.meta?.loadedAddresses;
+  const accountKeys = response.transaction.message
+    .getAccountKeys(loadedAddresses ? { accountKeysFromLookups: loadedAddresses } : undefined)
+    .keySegments()
+    .flat()
+    .map((key) => key.toBase58());
+  const outer = response.transaction.message.compiledInstructions.map((instruction) => ({
+    programIdIndex: instruction.programIdIndex,
+    accounts: Array.from(instruction.accountKeyIndexes),
+    data: Uint8Array.from(instruction.data)
+  }));
+  const inner = (response.meta?.innerInstructions ?? []).map((group) => ({
+    index: group.index,
+    instructions: group.instructions.map((instruction) => ({
+      programIdIndex: instruction.programIdIndex,
+      accounts: Array.from(instruction.accounts),
+      data: bs58.decode(instruction.data)
+    }))
+  }));
+  return {
+    signature,
+    slot: response.slot,
+    accountKeys,
+    instructions: flattenTransactionInstructions(outer, inner)
+  };
 }
 
 export interface LoaderV3InstructionFact {

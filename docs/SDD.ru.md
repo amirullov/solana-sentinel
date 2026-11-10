@@ -358,29 +358,29 @@ CI настроен для format, lint, TypeScript typecheck/tests/build, Rust 
 
 Эти значения не должны появляться как достигнутые без отчёта с периодом, выборкой и окружением.
 
-## 17. Фактический статус на 6 ноября 2026
+## 17. Фактический статус на 10 ноября 2026
 
-| Область                       | Статус                                 | Доказательство/ограничение                                  |
-| ----------------------------- | -------------------------------------- | ----------------------------------------------------------- |
-| Monorepo и toolchain pins     | Реализовано                            | workspace manifests, lockfiles после install                |
-| Event ID/evidence hashing     | Реализовано                            | TypeScript unit tests                                       |
-| Loader-v3 decoder             | Реализовано, стартовый                 | Program/ProgramData и instruction tests; corpus ещё нужен   |
-| Replay/idempotency            | Реализовано, fixture foundation        | synthetic fixture; historical corpus ещё нужен              |
-| PostgreSQL schema             | Реализовано                            | миграции повторно применены к локальной БД                  |
-| Atomic webhook outbox         | Реализовано                            | PostgreSQL integration test; реальный endpoint ещё нужен    |
-| API/dashboard                 | Реализовано, pre-production            | findings/evidence/status API и runtime dashboard            |
-| Anchor registry               | Проверен локально и развёрнут в devnet | Program ID, RegistryConfig PDA и две Finding PDA            |
-| Yellowstone live correlation  | Реализовано, внешний E2E не выполнен   | finalized replay/reconnect/correlation; нужен provider      |
-| RPC reconciliation/polling    | Devnet authority-change E2E выполнен   | два finalized events, checkpoint и heartbeat                |
-| Detection engine              | Реализовано, стартовый набор правил    | versioned loader-v3 rules и unit tests                      |
-| Webhook delivery              | Реализовано, pre-production            | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E |
-| Publisher/registry SDK        | Два devnet attestations; default off   | два независимых RPC; generic account gate сохранён          |
-| Read-only verifier CLI        | Devnet E2E пройден для двух findings   | evidence/PDA/source/attestation checks дали true            |
-| Local-validator suite         | Выполнен локально                      | 6 сценариев; SBF v0/platform tools v1.58, не devnet         |
-| Devnet deployment/E2E         | Выполнено для authority rotation       | реальные signatures в devnet validation report              |
-| Mainnet read-only observation | Локальный pilot запущен                | Jupiter Swap V6, отдельная БД; без on-chain публикации      |
-| Mainnet deployment            | Не выполнено                           | отдельный mainnet Program ID не создан                      |
-| Verified build                | Не выполнено                           | verification artifact отсутствует                           |
+| Область                       | Статус                                 | Доказательство/ограничение                                   |
+| ----------------------------- | -------------------------------------- | ------------------------------------------------------------ |
+| Monorepo и toolchain pins     | Реализовано                            | workspace manifests, lockfiles после install                 |
+| Event ID/evidence hashing     | Реализовано                            | TypeScript unit tests                                        |
+| Loader-v3 decoder             | Реализовано, стартовый                 | Program/ProgramData и instruction tests; corpus ещё нужен    |
+| Replay/idempotency            | Реализовано, fixture foundation        | synthetic fixture; historical corpus ещё нужен               |
+| PostgreSQL schema             | Реализовано                            | миграции повторно применены к локальной БД                   |
+| Atomic webhook outbox         | Реализовано                            | PostgreSQL integration test; реальный endpoint ещё нужен     |
+| API/dashboard                 | Реализовано, pre-production            | findings/evidence/status API и runtime dashboard             |
+| Anchor registry               | Проверен локально и развёрнут в devnet | Program ID, RegistryConfig PDA и две Finding PDA             |
+| Yellowstone live correlation  | Реализовано, внешний E2E не выполнен   | finalized replay/reconnect/correlation; нужен provider       |
+| RPC reconciliation/polling    | Devnet authority-change E2E выполнен   | два finalized events, checkpoint и heartbeat                 |
+| Detection engine              | Реализовано, стартовый набор правил    | versioned loader-v3 rules и unit tests                       |
+| Webhook delivery              | Реализовано, pre-production            | HMAC, retry, HTTPS/SSRF guards; нужен реальный endpoint E2E  |
+| Publisher/registry SDK        | Два devnet attestations; default off   | два независимых RPC; generic account gate сохранён           |
+| Read-only verifier CLI        | Devnet E2E пройден для двух findings   | evidence/PDA/source/attestation checks дали true             |
+| Local-validator suite         | Выполнен локально                      | 6 сценариев; SBF v0/platform tools v1.58, не devnet          |
+| Devnet deployment/E2E         | Выполнено для authority rotation       | реальные signatures в devnet validation report               |
+| Mainnet read-only observation | Проверен 6 ноября; сейчас offline      | Jupiter Swap V6, отдельная БД; Docker требует восстановления |
+| Mainnet deployment            | Не выполнено                           | отдельный mainnet Program ID не создан                       |
+| Verified build                | Не выполнено                           | verification artifact отсутствует                            |
 
 ## 18. Roadmap
 
