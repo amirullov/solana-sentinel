@@ -28,4 +28,6 @@ pnpm --filter @sentinel/indexer import:signature C3Wt7dTJ12Jb8zNBDrhoTQFRRtbpaWq
 
 ## Граница результата
 
-На момент подготовки доказательства импорт в PostgreSQL и показ находки в панели **не завершены**: после перезапуска компьютера Docker Desktop не поднял локальную базу. `dry-run` вычислил находку в памяти. Публикации в собственный on-chain реестр Sentinel в mainnet нет; mainnet Program ID, Finding PDA и verified build для Sentinel отсутствуют. Событие показывает изменение кода, но само по себе не доказывает вредоносность или уязвимость Jupiter.
+После запуска локальной базы 10 ноября команда без `--dry-run` сохранила событие и finding в PostgreSQL (`status: inserted`). Повторный импорт вернул `status: duplicate`. API `/v1/findings` показал одну mainnet-находку; `/v1/findings/a78d32a5-7053-5fe1-8b95-9a3d27de5b93/evidence` вернул тот же Event ID и Evidence hash, что в JSON. Панель `http://localhost:3000` отобразила находку, а `/v1/status` в момент проверки вернул `operational` без issues. Это локальная проверка, не доказательство постоянной доступности.
+
+Публикации в собственный on-chain реестр Sentinel в mainnet нет; mainnet Program ID, Finding PDA и verified build для Sentinel отсутствуют. Нахождение исторической транзакции не доказывает, что Sentinel обнаружил её в реальном времени. Событие показывает изменение кода, но само по себе не доказывает вредоносность или уязвимость Jupiter.
